@@ -1,0 +1,30 @@
+OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(_start)
+
+SECTIONS
+{
+	 /*BASE_ADDR will be replaced with definition in Makefile by cpp*/
+	. = BASE_ADDR;
+	.reset : { KEEP(*(.reset)) }
+	
+	. = ALIGN(32);
+	.text : { KEEP(*(.text)) }
+
+	. = ALIGN(32);
+	.rodata : { KEEP(*(.rodata)) }
+
+	. = ALIGN(32);
+	.data : { KEEP(*(.data)) }
+
+	. = ALIGN(32);
+	_bin_end = .;
+
+	. = ALIGN(32);
+	_bss_start = .;
+	.bss : { KEEP(*(.bss*)) }
+	. = ALIGN(32);
+	_bss_end = .;
+
+	_heap_start = .;
+}
