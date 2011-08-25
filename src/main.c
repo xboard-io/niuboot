@@ -27,6 +27,11 @@
 
 static PINCTRL * const pinctrl = (PINCTRL*) REGS_PINCTRL_BASE_PHYS;
 #define hw_pinctrl (*pinctrl) 
+static CLKCTRL * const clkctrl = (CLKCTRL*) REGS_CLKCTRL_BASE_PHYS;
+#define hw_clkctrl (*clkctrl)
+static GPMI * const gpmi = (GPMI*) REGS_GPMI_BASE_PHYS;
+#define hw_gpmi (*gpmi)
+
 
 extern void *get_heap_start(void);
 
@@ -41,7 +46,7 @@ void gets(char *cmd)
 
 int main(void) 
 {
-	volatile char *ram_addr = ((int *)0x40000000);
+	volatile char *ram_addr = ((volatile char *)0x40000000);
 	int i;
    /*we use bank1-pin26,27 (duart_tx&rx)as LED flash*/
     	hw_pinctrl.muxsel[3].set = 0xf00000; 
@@ -65,7 +70,17 @@ int main(void)
 
     
 	char * cmd_buf = (char*)get_heap_start;	//compiler variable
-	serial_puthex(cmd_buf);
+	serial_puthex((unsigned int)cmd_buf);
+	serial_puts("\n");
+	serial_puts("1.starting mux-on gpmi pins, press any key to continue..\n");
+	hw_pinctrl.muxsel[0].clr = 0xffff; //open gpmi_d0 - d7
+	hw_pinctrl.muxsel[1].clr = 0x000fc3cf;//open r/w wp, ready0,1, ALE, CLE
+	hw_pinctrl.muxsel[5].clr = 0x03c00000; //opne ce0/1
+	
+	//set gpmi clk
+	hw_clkctrl.gpmi &= ~(1<<31); //xtal clk 24Mhz to GPMI
+//	hw_clkctrl.clkseq 
+	//while(1);
 	while(1)
 	{
 		serial_puts("NiuBoot#");

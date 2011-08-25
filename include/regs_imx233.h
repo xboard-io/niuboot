@@ -39,14 +39,15 @@
 #define REGS_CLKCTRL_BASE_PHYS (0x80040000)
 
 
+typedef volatile int reg;
+
 typedef struct {
-	volatile int dat;
-	volatile int set;
-	volatile int clr;
-	volatile int tog;
+	reg dat;
+	reg set;
+	reg clr;
+	reg tog;
 }REG;
 
-typedef volatile int reg;
 
 typedef struct {
 	REG ctrl __attribute__ ((aligned(0x100)));
@@ -87,3 +88,43 @@ typedef struct {
 	reg macr;
 }UARTDBG;
 
+typedef struct {
+	REG pllctrl[2];
+	REG cpu;
+	REG hbus;
+	REG xbus;
+	REG xtal;
+	reg pix  __attribute__ ((aligned(sizeof(REG))));
+	reg ssp  __attribute__ ((aligned(sizeof(REG))));
+	reg gpmi  __attribute__ ((aligned(sizeof(REG))));
+	reg spdif  __attribute__ ((aligned(sizeof(REG))));
+	reg emi  __attribute__ ((aligned(sizeof(REG))));
+	REG _pad_1;
+	reg saif  __attribute__ ((aligned(sizeof(REG))));
+	reg tv  __attribute__ ((aligned(sizeof(REG))));
+	reg etm  __attribute__ ((aligned(sizeof(REG))));
+	REG frac;
+	REG frac1;
+	REG clkseq;
+	reg reset  __attribute__ ((aligned(sizeof(REG))));
+	reg status  __attribute__ ((aligned(sizeof(REG))));
+	reg version  __attribute__ ((aligned(sizeof(REG))));
+}CLKCTRL;
+
+typedef struct {
+	REG ctrl0;
+	reg compare __attribute__ ((aligned(sizeof(REG))));
+	REG eccctrl;
+	reg ecccount __attribute__ ((aligned(sizeof(REG))));
+	reg payload __attribute__ ((aligned(sizeof(REG))));
+	reg auxiliary __attribute__ ((aligned(sizeof(REG))));
+	REG ctrl1;
+	reg timing[2] __attribute__ ((aligned(sizeof(REG))));
+	REG _pad_1;
+	reg data __attribute__ ((aligned(sizeof(REG))));
+	reg stat __attribute__ ((aligned(sizeof(REG))));
+	reg debug __attribute__ ((aligned(sizeof(REG))));
+	reg version __attribute__ ((aligned(sizeof(REG))));
+	reg debug2 __attribute__ ((aligned(sizeof(REG))));
+	reg debug3 __attribute__ ((aligned(sizeof(REG))));
+}GPMI;
