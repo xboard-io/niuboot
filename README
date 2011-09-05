@@ -4,3 +4,28 @@ An easy, simple, light-weighted, small-bin-size, self-configuration, runtime-aut
 Support Devices:
 IMX233
 
+Src Fils:
+
+entry.S , the start point of whole program in ARM ASM.
+
+main.c , the main cycle of program as shell style UI
+
+init.c , SoC core and on-chip peripheral devices initialization
+
+serial.c , serial line (rs-232/UART) routines
+
+utils.c , self-implemented C standard library functions
+
+clock.c , clock generator arrangement
+
+gpmi.c , low level routines of GPMI(general purpose media interface) linked with nand-flash and ethernet device.
+
+net.c , IP stack alike function implemention
+
+---- drivers:  off-chip(off-SoC) peripherals device  ----
+
+dm9000x.c , dm9000 specific driving code 
+
+k9f1208.c , k9f1208 nand flash specific driving code
+
+

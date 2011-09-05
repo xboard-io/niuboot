@@ -1,5 +1,5 @@
 #include "utils.h"
-
+#include "serial.h"
 /* minimal implementation of string functions */
 /*
 char *strstr(const char *s1, const char *s2)
@@ -41,7 +41,12 @@ char *strcpy(char *s1, const char *s2)
 
 	return s;
 }
-
+char * strcat( char *dst, char *src)
+{
+	char *s = dst + strlen(dst);
+	strcpy(s, src);
+	return dst; 
+}
 int strncmp(const char *str1, const char *str2, int n) {
     int c=0;
     while(*str1 && *str2 && c<n) {
@@ -147,6 +152,27 @@ unsigned long simple_strtoul(const char *cp,char **endp,unsigned int base)
     if (endp)
         *endp = (char *)cp;
     return result;
+}
+
+char* puts( const char* s )
+{
+	char* no_standard_return =(char*) s;
+	while(*s)
+		putchar(*s++);
+	return no_standard_return;
+}
+char* gets( char *s )
+{
+	return 0;
+}
+int putchar(int c)
+{
+	serial_putc(c);
+	return c;
+}
+int getchar(void)
+{
+	return serial_getc();
 }
 
 void sys_reboot() {

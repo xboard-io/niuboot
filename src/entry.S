@@ -16,9 +16,19 @@
 	.section ".reset", "ax"
 	.global _start
 _start:
+	b init
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+	b .
+init:
 	/*stack pointer special for imx233 , shall be changed later to support multiple ARM core SoCs*/
 	mov sp, #0x8000	
 
+	bl clear_bss
 	/*C entry point*/
     	bl main	 
 	b .

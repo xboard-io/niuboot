@@ -22,15 +22,22 @@ static char *strstr(const char *s1, const char *s2)
 	return 0;
 }
 */
+char* puts( const char* s );
+char* gets( char *s );
+int putchar( const int c );
+int getchar( void );
 
 int strlen(const char *s);
 char *strcpy(char *s1, const char *s2);
+char * strcat( char *dst, char *src);
 int strncmp(const char *str1, const char *str2, int n);
 int strcmp(const char *str1, const char *str2);
 void udelay(int usecs);
 void *memcpy(void *s1, const void *s2, int n);
 void sys_reboot();
 void mdelay(int s);
+
+#define NULL 0
 
 #define TOLOWER(x) ((x) | 0x20)
 #define _U  0x01    /* upper */

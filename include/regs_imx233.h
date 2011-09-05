@@ -40,6 +40,7 @@
 
 
 typedef volatile int reg;
+typedef volatile char byte;
 
 typedef struct {
 	reg dat;
@@ -119,12 +120,34 @@ typedef struct {
 	reg payload __attribute__ ((aligned(sizeof(REG))));
 	reg auxiliary __attribute__ ((aligned(sizeof(REG))));
 	REG ctrl1;
-	reg timing[2] __attribute__ ((aligned(sizeof(REG))));
+	reg timing0 __attribute__ ((aligned(sizeof(REG))));
+	reg timing1 __attribute__ ((aligned(sizeof(REG))));
 	REG _pad_1;
-	reg data __attribute__ ((aligned(sizeof(REG))));
+	union{
+	reg data ;
+	byte data_byte;
+	} __attribute__ ((aligned(sizeof(REG))));
 	reg stat __attribute__ ((aligned(sizeof(REG))));
 	reg debug __attribute__ ((aligned(sizeof(REG))));
 	reg version __attribute__ ((aligned(sizeof(REG))));
 	reg debug2 __attribute__ ((aligned(sizeof(REG))));
 	reg debug3 __attribute__ ((aligned(sizeof(REG))));
 }GPMI;
+
+#define reg(reg_name) union{ reg reg_name; REG _reg_name##_aligned;}
+typedef struct {
+	REG ctrl[3];
+	reg( devsel );
+	struct {
+		reg( curcmdar );
+		reg( nxtcmdar );
+		reg( cmd );
+		reg( bar );
+		reg( sema );
+		reg( debug1 );
+		reg( debug2 );
+	}ch[8];
+	REG _pad_[3];
+	reg( version );
+}APBH;
+
