@@ -171,13 +171,43 @@ char* get_cmd(char *cmd) //accept ctrl-c, bs, tab, ESC sequence ... up , down , 
 		}
 }
 
+/*input:
+	cmd: the cmd str to split into pieces by space 
+	n: the lenth of argv
+output:
+	argv: the pointer to an str array to store the pieces str
+return:
+	the number of pieces str.
+*/
+int cut_cmd(char *cmd, int argv_len, char* argv[]) 
+{
+	int i,cnt;
+	int str_len = strlen(cmd);
+
+	for( i=0; i<str_len; i++ ) 
+	{
+		if(cmd[i]==' ') 
+			cmd[i] = '\0';
+	}
+	for( i=0,cnt=0; (i<str_len) && (cnt<argv_len); i++ )
+	{
+		if(cmd[i])
+		{
+			argv[cnt++] = cmd+i;
+			i += strlen(cmd+i);
+		}
+	}
+	return cnt;
+}
+
 int main(void) 
 {
 //	volatile char *ram_addr = ((volatile char *)0x40000000);
 	
 	int i;
-    
+   	int param_cnt; 
 	char * cmd_buf = (char*)get_heap_start;	//compiler variable
+	char * cmd_params[8];
 	//serial_puthex((unsigned int)cmd_buf);
 	//serial_puts("\n");
 /*	i = 0x40000000;
@@ -188,13 +218,25 @@ int main(void)
 */
 
 	serial_init();
+	puts("\n\n\t--NiuBoot v0.9--\n(C) CFFHH Open Embedded Org. 2011\n\tDistributed Under GPLv3\n\n");
 	for(;;)
 	{
-		puts("NiuBoot#");
+		puts("NIUBOOT# ");
 		get_cmd(cmd_buf);
-		serial_puts("\nyou enterred:");
-		serial_puts(cmd_buf);
-		serial_puts("\n");
+		puts("\n");
+		param_cnt = cut_cmd(cmd_buf, sizeof cmd_params / sizeof (char*), cmd_params);
+		
+		if(param_cnt)
+		{
+			for(i=0; i<sizeof cmd_list / sizeof(CMD); i++)
+				if( strcmp( cmd_params[0], cmd_list[i].name) == 0 )
+				{
+					cmd_list[i].func( param_cnt,(const char* const*) cmd_params );
+					break;
+				}
+			if( i == sizeof cmd_list / sizeof(CMD) )
+				puts("Wrong Command. ? for help\n");
+		}
 	}
 	
 }
@@ -202,12 +244,14 @@ int main(void)
 CMD_FUNC_DEF (cmd_help)
 {
 	const char usage[] = "help - print this\n" "? - alias of help\n";
-	if(argc < 1)
+	if(argc < 0)
 	{
-		puts(usage);
+		if(strcmp("help", argv[0])==0)
+			puts(usage);
 		return 0;
 	}
 	int i;
+	puts("\n");
 	for( i = 0; i<sizeof cmd_list / sizeof(CMD); i++)
 	{
 		cmd_list[i].func( -1, &cmd_list[i].name );
@@ -217,24 +261,38 @@ CMD_FUNC_DEF (cmd_help)
 }
 CMD_FUNC_DEF( cmd_mem )
 {
-	const char usage[] = "mem <add(hex)> [num=1] - show num of data from specified address\n"
+	const char usage[] = "mem - show num of data from specified address\n"
+			"\tmem <add(hex)> [num=1]\n"
 			"* - alias of mem\n";
 	if(argc < 2)
 	{
-		if( strcmp( "mem", argv[0] )==0 );
+		if( argc>0 ||  strcmp( "mem", argv[0] )==0 )
 			puts(usage);
 		return 0;
 	}
+	unsigned int *addr = (unsigned int*) (~0x3 & simple_strtoul( argv[1], NULL, 16));
+	unsigned int i, num = 1;
+	if( argc > 2 ) 
+		num = simple_strtoul(argv[2], NULL, 16);	
+
+	for( i=0; i<num; i++, addr++)	
+	{
+		if( (i&0x3)==0 ) 
+			printf("\n%x\t", addr);
+		printf("%x ", *addr); 
+	}
+	puts("\n");
 	return 0;
 
 }
 CMD_FUNC_DEF( cmd_word )
 {
-	const char usage[] = "word <add(hex)> <value(hex)> - set value to specified address\n"
+	const char usage[] = "word  - set value to specified address\n"
+			"\t<add(hex)> <value(hex)>\n"
 			"@ - alias of word\n";	
 	if(argc < 3) 
 	{
-		if( strcmp( "word", argv[0] )==0 );
+		if( strcmp( "word", argv[0] )==0 )
 			puts(usage);
 		return 0;
 	}
@@ -252,7 +310,8 @@ CMD_FUNC_DEF( cmd_config )
 }
 CMD_FUNC_DEF( cmd_ping )
 {
-	const char usage[] = "ping <ipv4> - send ARP to host machine\n";
+	const char usage[] = "ping - send ARP to host machine\n"
+			"\tping <ipv4>\n" ;
 	if(argc < 1)
 	{
 		puts(usage);
@@ -262,7 +321,8 @@ CMD_FUNC_DEF( cmd_ping )
 }
 CMD_FUNC_DEF( cmd_tftp )
 {
-	const char usage[] = "tftp <host> <file_name> <add(hex)> - download specified file from host to specified memory address\n";
+	const char usage[] = "tftp - download specified file from host to specified memory address\n"
+			"\ttftp <host> <file_name> <add(hex)>\n";
 	if(argc < 1)
 	{
 		puts(usage);
@@ -273,7 +333,8 @@ CMD_FUNC_DEF( cmd_tftp )
 
 CMD_FUNC_DEF( cmd_go )
 {
-	const char usage[] = "go <add(hex)> [tag_list] - change PC to add or booting linux kernel with tag_list\n";
+	const char usage[] = "go - change PC to add or booting linux kernel with tag_list\n"
+			"\tgo <add(hex)> [tag_list]\n"; 
 	if(argc < 1)
 	{
 		puts(usage);

@@ -26,6 +26,7 @@ char* puts( const char* s );
 char* gets( char *s );
 int putchar( const int c );
 int getchar( void );
+int printf(const char* format, ...);
 
 int strlen(const char *s);
 char *strcpy(char *s1, const char *s2);

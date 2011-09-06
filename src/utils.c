@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "serial.h"
+#include <stdarg.h>
 /* minimal implementation of string functions */
 /*
 char *strstr(const char *s1, const char *s2)
@@ -154,6 +155,46 @@ unsigned long simple_strtoul(const char *cp,char **endp,unsigned int base)
     return result;
 }
 
+char* itox( unsigned int num )
+{
+	static char hex[12] = "0x";
+	int i, pos;
+	const char lut[]="0123456789ABCDEF";
+	
+	for(i=0, pos=2; i<8; i++)
+	{
+		if( (hex[pos] = lut[ (num<<4*i)>>28 ]) != '0' ||  pos != 2 )
+			pos++;
+		hex[pos+1]='\0';
+	}	
+	return hex;
+}
+int printf(const char* format, ...)
+{
+	int i;
+	va_list arg_list;
+	va_start( arg_list, format );
+
+	for( i=0;format[i];i++ )
+	{
+		if(format[i] == '%')
+		{
+			switch(format[++i])
+			{
+				case 's':
+					puts( va_arg( arg_list, char *) ); 
+					continue;
+				case 'x':
+					puts( itox( va_arg( arg_list, unsigned int ) ) );
+					continue;
+				default:
+					i--;
+			}		
+		}
+		putchar(format[i]);
+	}
+	return i;
+}
 char* puts( const char* s )
 {
 	char* no_standard_return =(char*) s;
