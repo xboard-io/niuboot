@@ -21,9 +21,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "serial.h"
 #include "utils.h"
 #include "main.h"
+#include "init.h"
 
 extern void *get_heap_start(void);
 static const CMD cmd_list[] = 
@@ -208,16 +208,9 @@ int main(void)
    	int param_cnt; 
 	char * cmd_buf = (char*)get_heap_start;	//compiler variable
 	char * cmd_params[8];
-	//serial_puthex((unsigned int)cmd_buf);
-	//serial_puts("\n");
-/*	i = 0x40000000;
-	while(i+=4)
-	{
-		serial_puthex(i);	
-	}
-*/
 
-	serial_init();
+	init_soc(MCIMX233);
+
 	puts("\n\n\t--NiuBoot v0.9--\n(C) CFFHH Open Embedded Org. 2011\n\tDistributed Under GPLv3\n\n");
 	for(;;)
 	{
@@ -270,7 +263,7 @@ CMD_FUNC_DEF( cmd_mem )
 			puts(usage);
 		return 0;
 	}
-	unsigned int *addr = (unsigned int*) (~0x3 & simple_strtoul( argv[1], NULL, 16));
+	volatile unsigned int *addr = (unsigned int*) (~0x3 & simple_strtoul( argv[1], NULL, 16));
 	unsigned int i, num = 1;
 	if( argc > 2 ) 
 		num = simple_strtoul(argv[2], NULL, 16);	
@@ -296,6 +289,10 @@ CMD_FUNC_DEF( cmd_word )
 			puts(usage);
 		return 0;
 	}
+	volatile unsigned int *addr = (unsigned int*) (~0x3 & simple_strtoul( argv[1], NULL, 16));
+	unsigned int val = simple_strtoul(argv[2], NULL, 16);	
+	*addr = val;
+	cmd_mem(2, argv);
 	return 0;
 }
 CMD_FUNC_DEF( cmd_config )

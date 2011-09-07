@@ -48,6 +48,7 @@ typedef struct {
 	reg clr;
 	reg tog;
 }REG;
+#define reg(reg_name) union{ reg reg_name; REG _reg_name##_aligned;}
 
 
 typedef struct {
@@ -95,46 +96,46 @@ typedef struct {
 	REG hbus;
 	REG xbus;
 	REG xtal;
-	reg pix  __attribute__ ((aligned(sizeof(REG))));
-	reg ssp  __attribute__ ((aligned(sizeof(REG))));
-	reg gpmi  __attribute__ ((aligned(sizeof(REG))));
-	reg spdif  __attribute__ ((aligned(sizeof(REG))));
-	reg emi  __attribute__ ((aligned(sizeof(REG))));
+	reg( pix ); 
+	reg( ssp );
+	reg( gpmi );
+	reg( spdif );
+	reg( emi );
 	REG _pad_1;
-	reg saif  __attribute__ ((aligned(sizeof(REG))));
-	reg tv  __attribute__ ((aligned(sizeof(REG))));
-	reg etm  __attribute__ ((aligned(sizeof(REG))));
+	reg( saif );
+	reg( tv );
+	reg( etm );
 	REG frac;
 	REG frac1;
 	REG clkseq;
-	reg reset  __attribute__ ((aligned(sizeof(REG))));
-	reg status  __attribute__ ((aligned(sizeof(REG))));
-	reg version  __attribute__ ((aligned(sizeof(REG))));
+	reg( reset );
+	reg( status );
+	reg( version );
 }CLKCTRL;
 
 typedef struct {
 	REG ctrl0;
-	reg compare __attribute__ ((aligned(sizeof(REG))));
+	reg( compare );
 	REG eccctrl;
-	reg ecccount __attribute__ ((aligned(sizeof(REG))));
-	reg payload __attribute__ ((aligned(sizeof(REG))));
-	reg auxiliary __attribute__ ((aligned(sizeof(REG))));
+	reg( ecccount );
+	reg( payload );
+	reg( auxiliary );
 	REG ctrl1;
-	reg timing0 __attribute__ ((aligned(sizeof(REG))));
-	reg timing1 __attribute__ ((aligned(sizeof(REG))));
+	reg( timing0 );
+	reg( timing1 );
 	REG _pad_1;
 	union{
-	reg data ;
+	reg data;
 	byte data_byte;
-	} __attribute__ ((aligned(sizeof(REG))));
-	reg stat __attribute__ ((aligned(sizeof(REG))));
-	reg debug __attribute__ ((aligned(sizeof(REG))));
-	reg version __attribute__ ((aligned(sizeof(REG))));
-	reg debug2 __attribute__ ((aligned(sizeof(REG))));
-	reg debug3 __attribute__ ((aligned(sizeof(REG))));
+	REG _data_ligned;
+	};
+	reg( stat );
+	reg( debug );
+	reg( version );
+	reg( debug2 );
+	reg( debug3 );
 }GPMI;
 
-#define reg(reg_name) union{ reg reg_name; REG _reg_name##_aligned;}
 typedef struct {
 	REG ctrl[3];
 	reg( devsel );
@@ -151,3 +152,56 @@ typedef struct {
 	reg( version );
 }APBH;
 
+typedef struct {
+	REG ctrl;
+	REG v5ctrl;
+	REG minpwr;
+	REG charge;
+	reg( vdddctrl );
+	reg( vddactrl );
+	reg( vddioctrl );
+	reg( vddmemctrl );
+	reg( dcdc4p2 );
+	reg( misc );
+	reg( dclimits );
+	reg( loopctrl );
+	reg( sts );
+	REG( speed );
+	reg( battmonitor );
+	REG _pad_1;
+	REG reset;
+	REG debug;
+	REG special;
+	reg version;
+}POWER;
+
+typedef struct {
+	REG ctrl;
+	REG _pad_1[14];
+	reg( version );
+}EMI;
+
+typedef struct {
+	reg ctl[41];
+}DRAM;
+
+typedef struct {
+	REG ctrl;
+	REG status;
+	REG hclkcount;
+	REG ramctrl;
+	REG ramrepair;
+	REG romctrl;
+	reg( writeonce );
+	REG _pad_1[2];
+	reg( entropy );
+	reg( entropy_latched );
+	reg( sjtag_dbg );
+	REG microseconds;
+	reg( dbgrd );
+	reg( dbg );
+	REG ocram_bist_csr;
+	REG _pad_2;
+	REG ocram_status[14];
+	//not finished , TBD
+}DIGCTL;

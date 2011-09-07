@@ -78,18 +78,6 @@ int strcmp(const char *str1, const char *str2) {
     return 1;
 }
 
-
-void udelay(int usecs) {
-    char c;
-    int i;
-    //usecs*=100;
-    for(i=1; i<=usecs; i++) {
-        c++;
-        c=c/i;
-    }
-    return;
-}
-
 void *memcpy(void *s1, const void *s2, int n)
 {
 	char *dst = s1;
@@ -221,8 +209,3 @@ void sys_reboot() {
     //HW_CLKCTRL_RESET_WR(1);
 }
 
-void mdelay(int s)
-{
-	while(s--)
-	;
-}

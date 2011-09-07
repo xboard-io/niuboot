@@ -33,10 +33,8 @@ char *strcpy(char *s1, const char *s2);
 char * strcat( char *dst, char *src);
 int strncmp(const char *str1, const char *str2, int n);
 int strcmp(const char *str1, const char *str2);
-void udelay(int usecs);
 void *memcpy(void *s1, const void *s2, int n);
 void sys_reboot();
-void mdelay(int s);
 
 #define NULL 0
 

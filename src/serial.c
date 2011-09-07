@@ -58,9 +58,9 @@ void serial_init (void)
 
     // Set the uart_tx and uart_rx pins to be for the uart, and not e.g.
     // for GPIO.
-    hw_pinctrl.muxsel[3].clr = (3<<20)|(3<<22);
+    /*	hw_pinctrl.muxsel[3].clr = (3<<20)|(3<<22);
     hw_pinctrl.muxsel[3].set =(2<<20)|(2<<22);
-
+	*/
 
     // Disable UART
     hw_uartdbg.cr = 0;
