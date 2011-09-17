@@ -6,7 +6,7 @@ INCLUDEDIR	= $(CURRENTDIR)/include
 COMPILER_DIR	= /home/zhai/arm-linux/arm-2011.03/lib/gcc/arm-none-eabi/4.5.2
 
 # Linker script 
-BASE_ADDR	?= 0x00002000
+BASE_ADDR	?= 0x00000000
 BOOT_LAYOUT_IN	= $(SRCDIR)/niuboot.ld.in
 BOOT_LAYOUT_OUT	= $(OUTPUTDIR)/niuboot.ld
 

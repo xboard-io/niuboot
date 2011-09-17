@@ -60,10 +60,11 @@ int init_soc(int soc_type)
 	{
 		case MCIMX233:
 			init_all_pins(); //base on board layout
-			serial_init(); //heading by serial_ means this function is from serial.c
 			init_clock_power();
-			//init_dma();
-			//gpmi_init(); //heading by gpmi_ means this function is from gpmi.c
+		//	init_dma();
+
+			serial_init(); //heading by serial_ means this function is from serial.c
+						//gpmi_init(); //heading by gpmi_ means this function is from gpmi.c
 			init_sdram();
 
 			break;
@@ -252,7 +253,7 @@ void init_all_pins(void)
 	/*GPMI pin initialized for GPMI-8 and CE0 & CE1*/
 	hw_pinctrl.muxsel[0].clr = 0xffff; //open gpmi_d0 - d7
 	hw_pinctrl.muxsel[1].clr = 0x000fc3cf;//0x000fc3c3;open r/w wp, ready0,1, ALE, CLE
-	hw_pinctrl.muxsel[5].clr =0x03c00000;// 0x03000000; ////opne ce0/1
+	hw_pinctrl.muxsel[5].clr = 0x03c00000;// 0x03000000; ////opne ce0/1
 	hw_pinctrl.pull[0].set = 0xff;
 
 	/*EMI DDR SDRAM init for EMI pins*/
@@ -260,13 +261,14 @@ void init_all_pins(void)
 	//hw_pinctrl.drive[9-13]: no need to set this time, we use default value, 2.5V/4ma
 	//seems not work, change to 2.5V/12ma
 	for(i=9;i<=13;i++)
-		hw_pinctrl.drive[i].dat = 0x66666666;
+		hw_pinctrl.drive[i].dat = 0x77777777;
+
 	hw_pinctrl.muxsel[4].clr = 0xfffc0000; //open A0-A6
 	hw_pinctrl.muxsel[5].clr = 0xfc3fffff; //open cas,ras,we,ce0/1,a7-a12,ba0/1
 	hw_pinctrl.muxsel[6].clr = 0xffffffff; //open d0-d15
 	hw_pinctrl.muxsel[7].clr = 0x00000fff; //open clk,clkn, dqs,dqm
 
-	hw_pinctrl.pull[3].clr = 0x0003ffff;	//disable padkeeper on EMI pins
+	//hw_pinctrl.pull[3].clr = 0x0003ffff;	//disable padkeeper on EMI pins
 }
 
 void init_clock_power(void)
@@ -281,12 +283,12 @@ void init_clock_power(void)
 
 	/*Vdd-Mem output voltage*/
 	hw_power.vddmemctrl = 0xf00 | (((2500-1700)/50)&0x1f); //2.5v output, and enable current limit in case of damage 
-	udelay(10000); //wait 1ms for capacitor charging
+	udelay(1000); //wait 1ms for capacitor charging
 	hw_power.vddmemctrl &= ~0x600;	//clear current limit and pull down
 
 	/*enable PLL and set dividor fraction*/
 	hw_clkctrl.pllctrl[0].set = 0x10000; //power on pll
-	udelay(100000); //wait pll lock
+	udelay(150); //wait pll lock
 
 	/*set cpu freq. to 454Mhz CLK_P*/
 	hw_clkctrl.frac.clr = 0x1f;
@@ -305,9 +307,9 @@ void init_clock_power(void)
 	hw_clkctrl.frac.set = 0x1f00; 
 	hw_clkctrl.frac.clr = ~27; //480Mhz * (18/27) = 320Mhz :ref_emi
 	hw_clkctrl.frac.clr = 0x8000; //enable clock gate of emi
-	udelay(11000);	
+	udelay(100);	
 	hw_clkctrl.emi &= ~0x1f; //clear emi dividor
-	hw_clkctrl.emi |= 0x4; //320Mhz/4 =80Mhz , the final emi freq.
+	hw_clkctrl.emi |= 0x8; //320Mhz/4 =80Mhz , the final emi freq.
 	hw_clkctrl.emi &= ~0xc0000000; //clr gate, syc disble
 
 	hw_clkctrl.clkseq.clr = 0x40; //enable emi clock to pll (clear bypassing)
@@ -332,6 +334,7 @@ void init_sdram(void) //imx233 128pin MT46V32M16
 	hw_dram.ctl[6] = 0x00010000;
 	hw_dram.ctl[7] = 0x01000001;
 	hw_dram.ctl[9] = 0x00000001;
+
 	hw_dram.ctl[10] = 0x07000200;
 	hw_dram.ctl[11] = 0x00070202; //64MB, col-line: 10
 	hw_dram.ctl[12] = 0x02020000;
@@ -342,19 +345,20 @@ void init_sdram(void) //imx233 128pin MT46V32M16
 	hw_dram.ctl[17] = 0x25001506;
 	hw_dram.ctl[18] = 0x1f1f0000;
 	hw_dram.ctl[19] = 0x027f1a1a;
-	hw_dram.ctl[20] = 0x02051c22;
-	hw_dram.ctl[21] = 0x00000007;
+
+	hw_dram.ctl[20] = 0x02041c22;//ras-min: 5->4 
+	hw_dram.ctl[21] = 0x00000006;//trfc: 7->6
 	hw_dram.ctl[22] = 0x00080008;
 	hw_dram.ctl[23] = 0x00200020;
 	hw_dram.ctl[24] = 0x00200020;
 	hw_dram.ctl[25] = 0x00200020;
-	hw_dram.ctl[26] = 0x000002e6;
-	hw_dram.ctl[29] = 0x00000020;
-	hw_dram.ctl[30] = 0x00000020;
+	hw_dram.ctl[26] = 0x00000269;//tref:0x2e6->269
+	hw_dram.ctl[29] = 0x00000000;//lowpower_external_cnt:20->00
+	hw_dram.ctl[30] = 0x00000000;//lowpower_external_cnt:20->00
 	hw_dram.ctl[31] = 0x00c80000;
-	hw_dram.ctl[32] = 0x00081a3b;
+	hw_dram.ctl[32] = 0x000615d6;//0x00081a3b;
 	hw_dram.ctl[33] = 0x000000c8;
-	hw_dram.ctl[34] = 0x00004b0d;
+	hw_dram.ctl[34] = 0x00003e80;//4b0d;
 	hw_dram.ctl[36] = 0x00000101;
 	hw_dram.ctl[37] = 0x00040001;
 	hw_dram.ctl[38] = 0x00000000;

@@ -26,6 +26,91 @@
 #include "init.h"
 
 extern void *get_heap_start(void);
+
+
+CMD_FUNC_DEF( cmd_test )
+{
+	const char usage[] = "sdramtest\n"
+			; 
+	if(argc < 1)
+	{
+		puts(usage);
+		return 0;
+	}
+	//printf("argc=%x,%s,%s\n", argc, argv[0], argv[1]);
+	if((argc>=3) && (argv[1][0]=='s'))
+	{
+		volatile unsigned int * dst= (unsigned int*) 0x40000000;
+		unsigned int i, temp;	
+		unsigned int val = simple_strtoul(argv[2],NULL,16);
+		printf("word test\n");	
+		for(i=0 ; i < 0x1000000; i++ )
+		{
+			dst[i]= val;
+		}
+		//verify
+		for(i=0 ; i < 0x1000000; i++ )
+		{
+			if( (temp = dst[i])!=val ) 
+				printf("bad add:%x, val:%x, shouldbe %x\n", &dst[i], temp, val);		
+
+		}
+		return 0;
+	}
+	if((argc>=2) && (argv[1][0]=='w'))
+	{
+		volatile unsigned int * src= (unsigned int*) 0xc0000000;
+		volatile unsigned int * dst= (unsigned int*) 0x40000000;
+		unsigned int temp;
+		unsigned int i;	
+		printf("word test\n");	
+		for(i=0 ; i < 0x1000000; i++ )
+		{
+			dst[i]= src[i%(64*1024)];
+		}
+		//verify
+		for(i=0 ; i < 0x1000000; i++ )
+		{
+			if((temp = dst[i]) != src[i%(64*1024)])
+				printf("bad add:%x, val:%x, shouldbe %x\n", &dst[i], temp, src[i%(64*1024)]);		
+
+		}
+		return 0;
+	}
+	volatile unsigned short * add = (unsigned short*)0x40000000;
+	unsigned int i,j;
+	unsigned int temp;
+	unsigned short pat[8] =
+	{
+		0xaa, 0xaf1b, 0x99, 0xa603, 
+		0xcf, 0xbe, 0x92, 0x2d,
+		
+	/*	0xff,0x00,0xff,0xff,
+		0xff,0xff,0xff,0xff
+		*/
+	};
+	for(i=0; i<64*1024*1024/16; i++, add+=8)
+	{
+		add[0] = pat[0];		
+		add[2] = pat[2];
+		add[4] = pat[4];
+		add[5] = pat[5];
+		add[1] = pat[1];
+		add[7] = pat[7];
+		add[6] = pat[6];
+		add[3] = pat[3];
+
+		for(j=0; j<8; j++)
+			if((temp = add[j]) != pat[j])
+			{
+				printf("bad add:%x, add[%x]=%x, shouldbe %x\n", &add[j], j, temp, pat[j]);		
+			//	return 0;
+			}
+	}
+	return 0;
+}
+
+
 static const CMD cmd_list[] = 
 {
 		{"help", cmd_help },
@@ -38,6 +123,7 @@ static const CMD cmd_list[] =
 		{"ping", cmd_ping },
 		{"tftp", cmd_tftp },
 		{"go",   cmd_go },
+		{"sdramtest",cmd_test},
 		
 };
 
@@ -169,6 +255,7 @@ char* get_cmd(char *cmd) //accept ctrl-c, bs, tab, ESC sequence ... up , down , 
 				putchar(ch); //echo to console 
 				break;
 		}
+
 }
 
 /*input:
