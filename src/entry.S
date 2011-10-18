@@ -63,3 +63,5 @@ get_heap_start:
 	ldr	r0, =_heap_start
 	mov	pc, lr
 	.pool
+	.end
+

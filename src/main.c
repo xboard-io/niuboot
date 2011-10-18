@@ -24,9 +24,52 @@
 #include "utils.h"
 #include "main.h"
 #include "init.h"
+#include "gpmi.h"
+#include "net.h"
 
 extern void *get_heap_start(void);
+CMD_FUNC_DEF( cmd_dm )
+{
+	const char usage[] = "dm - dm9000 interface debug\n"
+			"\tdm <reg_no> [val]\n" ;
+	int i;
+	char *ip_str = (char*)argv[1];
 
+	if(argc < 2)
+	{
+		puts(usage);
+		return 0;
+	}
+	unsigned int reg_idx = simple_strtoul(argv[1],NULL,16);
+	unsigned int reg_val;
+	
+	if(argc == 3)
+	{
+		reg_val = simple_strtoul(argv[2], NULL, 16);
+		gpmi_dm9000_write_reg_index(reg_idx);
+		gpmi_dm9000_write_data_bulk(&reg_val, 1);
+		
+	/*char buf[]={0x41,0x42,0x43,0x44,0x45,0x46};
+	gpmi_dm9000_write_reg_index(reg_idx);
+	reg_val = simple_strtoul(argv[2], NULL, 16);
+	gpmi_dm9000_write_data_bulk(buf, 1);
+	gpmi_dm9000_write_data_bulk(buf+1,1);
+	gpmi_dm9000_write_data_bulk(buf+2,1);
+	return 0;
+	*/
+	}
+	//for(i=0;i<1000;i++)
+	//while(1)
+	{
+		gpmi_dm9000_write_reg_index(reg_idx);
+		gpmi_dm9000_read_data_bulk(&reg_val,1);
+		printf("reg = %x\n", reg_val);
+		//printf("reg = %x\n", gpmi_dm9000_read_reg(0x55));
+
+		printf("flash-id:%x\n", gpmi_k9f1208_read_id());
+	}
+	return 0;
+}
 
 CMD_FUNC_DEF( cmd_test )
 {
@@ -110,7 +153,7 @@ CMD_FUNC_DEF( cmd_test )
 	return 0;
 }
 
-
+	
 static const CMD cmd_list[] = 
 {
 		{"help", cmd_help },
@@ -124,6 +167,9 @@ static const CMD cmd_list[] =
 		{"tftp", cmd_tftp },
 		{"go",   cmd_go },
 		{"sdramtest",cmd_test},
+		{"ping", cmd_ping},
+		{"dm", cmd_dm}
+
 		
 };
 
@@ -396,13 +442,73 @@ CMD_FUNC_DEF( cmd_ping )
 {
 	const char usage[] = "ping - send ARP to host machine\n"
 			"\tping <ipv4>\n" ;
-	if(argc < 1)
+	int i;
+	char *ip_str = (char*)argv[1];
+
+	if(argc < 2)
 	{
 		puts(usage);
 		return 0;
 	}
+#if 1
+	IPV4 ip = {{0,0,0,0}};
+	for(i=0; i<4; i++, ip_str++)
+	{
+		while(*ip_str!='.')
+		{
+			if(!*ip_str)
+			{
+				if(i<3)
+					i=5;
+				break;
+			}
+			else if( (*ip_str-='0')>=0 && *ip_str<=9 )
+			{
+				ip.b[i] *= 10;
+				ip.b[i] += *ip_str;
+			}
+			else
+			{
+				i=100;
+			}
+			ip_str++;
+		}
+	}
+	if(i!=4)
+	{
+		printf("invalid ip address:%x.%x.%x.%x\n",ip.b[0],ip.b[1],ip.b[2],ip.b[3]);
+		return 0;
+	}
+		if( ping(ip) ) 
+	{
+		printf("remote no ack\n");
+	}	
+	else
+		printf("remote is alive\n");
+	
+#else
+	unsigned int reg_idx = simple_strtoul(argv[1],NULL,16);
+	unsigned int reg_val;
+	if(argc == 3)
+	{
+		reg_val = simple_strtoul(argv[2], NULL, 16);
+		gpmi_dm9000_write_reg_index(reg_idx);
+		gpmi_dm9000_write_data_bulk(&reg_val, 1);
+	}
+	//for(i=0;i<1000;i++)
+	//while(1)
+	{
+		gpmi_dm9000_write_reg_index(reg_idx);
+		gpmi_dm9000_read_data_bulk(&reg_val,1);
+		printf("reg = %x\n", reg_val);
+		//printf("reg = %x\n", gpmi_dm9000_read_reg(0x55));
+
+		printf("flash-id:%x\n", gpmi_k9f1208_read_id());
+	}
+#endif
 	return 0;
 }
+
 CMD_FUNC_DEF( cmd_tftp )
 {
 	const char usage[] = "tftp - download specified file from host to specified memory address\n"
@@ -424,6 +530,16 @@ CMD_FUNC_DEF( cmd_go )
 		puts(usage);
 		return 0;
 	}
+	/*while(1)
+	{
+		*((unsigned short *)0x402298a4) = 0xaaaa;
+	}*/
+	int block=simple_strtoul(argv[1],NULL,16);
+	int page=simple_strtoul(argv[2],NULL,16);
+	char *buf = (char*)simple_strtoul(argv[3],NULL,16);
+	gpmi_k9f1208_read_page(block,page,buf);
+	printf("ok\n");
+
 	return 0;
 }
 

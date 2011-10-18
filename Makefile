@@ -35,7 +35,7 @@ CFLAGS += -DSWORD
 
 
 # Generic code
-SRC_OBJS = entry.o serial.o main.o utils.o init.o 
+SRC_OBJS = entry.o serial.o main.o utils.o init.o gpmi.o dm9000x.o net.o
 
 
 NIUBOOT_OBJS = $(addprefix $(SRCDIR)/, $(SRC_OBJS))

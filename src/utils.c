@@ -88,7 +88,26 @@ void *memcpy(void *s1, const void *s2, int n)
 
 	return s1;
 }
+void *memset(void *s1, int c, int n)
+{
+	char *dst = s1;
 
+	while (n-- > 0)
+		*dst++ = c&0xff;
+
+	return s1;
+}
+void *memcmp(void *s1, const void *s2, int n)
+{
+	char *dst = s1;
+	char *src = s2;
+
+	while (n-- > 0)
+		if(*dst++ != *src++)
+			return --dst<--src?*dst:*src;  
+
+	return 0;
+}
 unsigned char _ctype[] = {
     _C,_C,_C,_C,_C,_C,_C,_C,            /* 0-7 */
     _C,_C|_S,_C|_S,_C|_S,_C|_S,_C|_S,_C,_C,     /* 8-15 */

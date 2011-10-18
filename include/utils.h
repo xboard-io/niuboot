@@ -34,6 +34,8 @@ char * strcat( char *dst, char *src);
 int strncmp(const char *str1, const char *str2, int n);
 int strcmp(const char *str1, const char *str2);
 void *memcpy(void *s1, const void *s2, int n);
+void *memset(void *s1, int c, int n);
+void *memcmp(void *s1, const void *s2, int n);
 void sys_reboot();
 
 #define NULL 0

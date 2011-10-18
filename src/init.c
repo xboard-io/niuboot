@@ -2,7 +2,7 @@
 #include "regs_imx233.h"
 #include "init.h"
 #include "serial.h"
-
+#include "dm9000x.h"
 
 static PINCTRL * const pinctrl = (PINCTRL*) REGS_PINCTRL_BASE_PHYS;
 #define hw_pinctrl (*pinctrl) 
@@ -22,33 +22,15 @@ static DIGCTL * const digctl = (DIGCTL*) REGS_DIGCTL_BASE_PHYS;
 #define hw_digctl (*digctl)
 
 
-typedef struct _dma_cmd
-{
-	struct _dma_cmd *next;
-
-	unsigned int command : 2 ;
-	unsigned int chain : 1;
-	unsigned int irq_complete : 1 ;
-	unsigned int nandlock : 1 ;
-	unsigned int nandwait4ready : 1 ;
-	unsigned int decrement_semaphore : 1 ;
-	unsigned int wait4endcmd : 1 ;
-	unsigned int un_used : 4 ;
-	unsigned int piowords_cnt : 4 ;
-	unsigned int xfer_cnt : 16 ;
-
-	unsigned int *dma_buf;
-	unsigned int piowords[1];	//size depends on piowords_cnt
-}DMA_CMD;
-
 void udelay(unsigned int n) //delay n micro-seconds by digctrl
 {
 	unsigned int start = hw_digctl.microseconds.dat;
 	while( hw_digctl.microseconds.dat < (start + n) ); 
-}
-void mdelay(unsigned int n)
-{
-	int i;
+} 
+
+void mdelay(unsigned int n) 
+{ 
+	int i; 
 	for(i=0; i<n; i++)
 		udelay(1000);
 }
@@ -60,13 +42,14 @@ int init_soc(int soc_type)
 	{
 		case MCIMX233:
 			init_all_pins(); //base on board layout
+			
 			init_clock_power();
-		//	init_dma();
+			//init_dma();
 
 			serial_init(); //heading by serial_ means this function is from serial.c
-						//gpmi_init(); //heading by gpmi_ means this function is from gpmi.c
 			init_sdram();
-
+			//gpmi_init(); //heading by gpmi_ means this function is from gpmi.c
+			dm9000_initialize();
 			break;
 	}
 	return 0;
@@ -91,9 +74,6 @@ int init_soc(int soc_type)
 
 // Set up writing (AND READING!) of the serial port.
 	//serial_init();
-	hw_pinctrl.muxsel[0].clr = 0xffff; //open gpmi_d0 - d7
-	hw_pinctrl.muxsel[1].clr = 0x000fc3cf;//0x000fc3c3;open r/w wp, ready0,1, ALE, CLE
-	hw_pinctrl.muxsel[5].clr =0x03c00000;// 0x03000000; ////opne ce0/1
 /*hw_pinctrl.dout[0].set = 1<<17;	
 hw_pinctrl.dout[2].set = 1<<27;
 hw_pinctrl.doe[0].set = 1<<17;
@@ -104,8 +84,7 @@ hw_pinctrl.doe[2].set = 1<<27;
 	//hw_pinctrl.drive[2].dat = 0x22222222;
 	hw_pinctrl.pull[0].set = 0xff;
 	//set gpmi clk
-	hw_clkctrl.gpmi &= ~(1<<31); //xtal clk 24Mhz to GPMI
-	udelay(0x100);
+		udelay(0x100);
 	hw_gpmi.ctrl0.clr = 1<<30; //open gate source
 	hw_apbh.ctrl[0].clr = 1<<30; 
 
@@ -231,8 +210,10 @@ void init_all_pins(void)
 {
 	int i;
 	hw_pinctrl.ctrl.set = 0;
+	hw_pinctrl.doe[0].set = 1<<23; //beep 3rd sword
+	hw_pinctrl.dout[0].clr = 1<<23;
    	/*we use bank1-pin26,27 (duart_tx&rx)as LED flash*/
-    	hw_pinctrl.muxsel[3].set = 0xf00000; 
+    /*	hw_pinctrl.muxsel[3].set = 0xf00000; 
 	
     	hw_pinctrl.dout[1].set = 0x0c000000;
 	hw_pinctrl.doe[1].set = 0x0c000000;
@@ -244,6 +225,7 @@ void init_all_pins(void)
 		hw_pinctrl.dout[1].clr = 3<<26;
 		mdelay(300);
 	}
+     */
 	/* GPIO init to DEBUG-UART rx and tx pins*/
 	hw_pinctrl.muxsel[3].set = 0x00f00000;
 	hw_pinctrl.muxsel[3].clr = 0x00500000;
@@ -260,8 +242,8 @@ void init_all_pins(void)
 
 	//hw_pinctrl.drive[9-13]: no need to set this time, we use default value, 2.5V/4ma
 	//seems not work, change to 2.5V/12ma
-	for(i=9;i<=13;i++)
-		hw_pinctrl.drive[i].dat = 0x77777777;
+	for(i=9;i<=14;i++)
+		hw_pinctrl.drive[i].dat = 0x33333333;//0;//0x77777777;
 
 	hw_pinctrl.muxsel[4].clr = 0xfffc0000; //open A0-A6
 	hw_pinctrl.muxsel[5].clr = 0xfc3fffff; //open cas,ras,we,ce0/1,a7-a12,ba0/1
@@ -275,6 +257,7 @@ void init_clock_power(void)
 {
 	hw_power.ctrl.clr = 0x40000000; //gate on power-ctrl domain
 	/*Vdd-Digital output voltage*/
+#if 1
 	unsigned int val;
 	val = hw_power.vdddctrl;
 	val &= ~0x1f;	//bit0-4, vddd output voltage triger 
@@ -291,32 +274,38 @@ void init_clock_power(void)
 	udelay(150); //wait pll lock
 
 	/*set cpu freq. to 454Mhz CLK_P*/
-	hw_clkctrl.frac.clr = 0x1f;
+	hw_clkctrl.frac.clr = 0x3f;//6bit int. divider
 	hw_clkctrl.frac.set = 19; //480Mhz * (18/19) = 454Mhz :ref_cpu
 	hw_clkctrl.frac.clr = 0x80; //enable clock gate of cpu
 	
 	/*set AHB bus freq. CLK_H*/
 	hw_clkctrl.hbus.set = 0x1f; //mask div fraction
-	hw_clkctrl.hbus.clr = 0x1c; //454Mhz/4=113.5Mhz
+	hw_clkctrl.hbus.clr = 0x1b; //454Mhz/4=113.5Mhz
+	//hw_clkctrl.hbus.clr = 0x19;
 
 	hw_clkctrl.clkseq.clr = 0x80; //switch cpu clock to pll (clear bypassing)
 	// well, we got cpu running at 454Mhz now! 
 
 	/*set EMI clock to 80Mhz */
 
-	hw_clkctrl.frac.set = 0x1f00; 
-	hw_clkctrl.frac.clr = ~27; //480Mhz * (18/27) = 320Mhz :ref_emi
+	hw_clkctrl.frac.set = 0x3f00; 
+	//hw_clkctrl.frac.clr = 0x400; //~27 ; //480Mhz * (18/27) = 320Mhz :ref_emi
+	hw_clkctrl.frac.clr = 0x2100;  //480Mhz * (18/30) = 288Mhz :ref_emi
 	hw_clkctrl.frac.clr = 0x8000; //enable clock gate of emi
 	udelay(100);	
-	hw_clkctrl.emi &= ~0x1f; //clear emi dividor
-	hw_clkctrl.emi |= 0x8; //320Mhz/4 =80Mhz , the final emi freq.
+	//hw_clkctrl.emi &= ~0x1f; //clear emi dividor
+	hw_clkctrl.emi |= 0x3f;
+	//hw_clkctrl.emi |= 0x4; //320Mhz/4 =80Mhz , the final emi freq.
+	//hw_clkctrl.emi &= ~0x17;//1b; //320M/4=80M
+	hw_clkctrl.emi &= ~0x3c; //288M/3=96M
+	//zhai comment @class
 	hw_clkctrl.emi &= ~0xc0000000; //clr gate, syc disble
 
 	hw_clkctrl.clkseq.clr = 0x40; //enable emi clock to pll (clear bypassing)
-
+#endif
 	/*set GPMI freq. */
 	hw_clkctrl.gpmi &= ~(1<<31); //xtal clk 24Mhz to GPMI
-	
+
 	/*set UART freq. */
 	//fixed to 24Mhz from xstal
 }
