@@ -120,6 +120,31 @@ CMD_FUNC_DEF( cmd_test )
 		}
 		return 0;
 	}
+	/* word random test */
+	if((argc>=2) && (argv[1][0]=='r'))
+	{
+		volatile unsigned int * src= (unsigned char*) 0xc0000000;
+		volatile unsigned int * dst= (unsigned int*) 0x40000000;
+		unsigned int temp;
+		unsigned int i;
+		unsigned int count;
+
+		count = 0x1000000;
+		printf("word random test\n");
+		for(i=0 ; i < count; i++ )
+		{
+			temp = random() % 0x1000000 - 4;
+			printf("temp = %x\n", temp);
+			dst[temp] = src[temp];
+		}
+		//verify
+		for(i=0 ; i < count; i++ )
+		{
+			if(dst[i] != src[i])
+				printf("bad add:%x, val:%x, shouldbe %x\n", &dst[i], dst[i], src[i]);
+		}
+		return 0;
+	}
 	volatile unsigned short * add = (unsigned short*)0x40000000;
 	unsigned int i,j;
 	unsigned int temp;
@@ -541,5 +566,28 @@ CMD_FUNC_DEF( cmd_go )
 	printf("ok\n");
 
 	return 0;
+}
+
+/*
+ * Linear congruential random number generator
+ */
+unsigned long random() 
+{
+	static unsigned long rand_seed = 47;
+	unsigned long rand_a = 48271L;
+	unsigned long rand_m = 2147483647L;
+	unsigned long rand_q = rand_m / rand_a;
+	unsigned long rand_r = rand_m % rand_a;
+	double d;
+	long tmp_seed;
+ 
+	tmp_seed = rand_a * (rand_seed % rand_q) - rand_r * (rand_seed / rand_q); 
+	if(tmp_seed >= 0) 
+		rand_seed = tmp_seed; 
+	else 
+		rand_seed = tmp_seed + rand_m; 
+	d = (double)rand_seed / rand_m; 
+
+	return (unsigned long)(d * 100000000);
 }
 
