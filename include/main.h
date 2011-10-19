@@ -18,3 +18,4 @@ CMD_FUNC_DEF( cmd_ping );
 CMD_FUNC_DEF( cmd_tftp );
 CMD_FUNC_DEF( cmd_go );
 
+unsigned long random();
