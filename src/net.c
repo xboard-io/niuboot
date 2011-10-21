@@ -1,7 +1,7 @@
-typedef unsigned char u8;
-typedef unsigned short u16, n16;
-typedef unsigned int u32, n32;
-typedef struct {u8 b[6];} n48;
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t, n16;
+typedef unsigned int uint32_t, n32;
+typedef struct {uint8_t b[6];} n48;
 
 #include "dm9000x.h"
 #include "net.h"
@@ -19,33 +19,33 @@ typedef struct
 {
 	n48 dest;
 	n48 src;
-	u16 type;
+	uint16_t type;
 }HDR_MAC;
 
 typedef struct
 {
-	u16 hw_type;
-	u16 protocal_type;
-	u8 mac_addr_len;
-	u8 ip_addr_len;
-	u16 action;
+	uint16_t hw_type;
+	uint16_t protocal_type;
+	uint8_t mac_addr_len;
+	uint8_t ip_addr_len;
+	uint16_t action;
 	n48 mac_src;
 	IPV4 ip_src;
 	n48 mac_dest;
 	IPV4 ip_dest;
-	u8 pad[32];
+	uint8_t pad[32];
 }ARP;
 
 typedef struct
 {
-	u8 head_len;
-	u8 tos;
-	u16 ip_len;
-	u16 id;
-	u16 frag;
-	u8 ttl;
-	u8 type; //icmp 0x1, udp 0x11, tcp 0x6
-	u16 checksum;
+	uint8_t head_len;
+	uint8_t tos;
+	uint16_t ip_len;
+	uint16_t id;
+	uint16_t frag;
+	uint8_t ttl;
+	uint8_t type; //icmp 0x1, udp 0x11, tcp 0x6
+	uint16_t checksum;
 	IPV4 ip_src;
 	IPV4 ip_dst;
 
@@ -53,10 +53,10 @@ typedef struct
 
 typedef struct
 {
-	u16 port_src;
-	u16 port_dest;
-	u16 udp_len;
-	u16 checksum;
+	uint16_t port_src;
+	uint16_t port_dest;
+	uint16_t udp_len;
+	uint16_t checksum;
 }HDR_UDP;
 
 typedef	struct
@@ -80,12 +80,12 @@ typedef struct
 	HDR_UDP udp;
 }TRANS_UDP;
 
-#define NET16(x) (u16)((((u16)(x))>>8) | (((u16)(x))<<8))
-#define NET32(x) ( NET16( (u32)(x)>>16 ) | (NET16(x)<<16) )
+#define NET16(x) (uint16_t)((((uint16_t)(x))>>8) | (((uint16_t)(x))<<8))
+#define NET32(x) ( NET16( (uint32_t)(x)>>16 ) | (NET16(x)<<16) )
 
-u16 checksum(u8 data[], int size, u32 sum)
+uint16_t checksum(uint8_t data[], int size, uint32_t sum)
 {
-	u16 word16;
+	uint16_t word16;
 	int i;
 	if(sum)
 		sum = (~sum)&0xffff;
@@ -109,7 +109,7 @@ u16 checksum(u8 data[], int size, u32 sum)
 	// one's complement the result
 	sum = ~sum;
 	
-return (u16)sum;
+return (uint16_t)sum;
 }
 
 //#define arp (*((TRANS_ARP*)NET_TX_BUF));
@@ -197,7 +197,7 @@ void send_udp_callback(char *buf, int size)
 				recv_udp_len = NET16(ack->udp.udp_len) - sizeof ack->udp;
 			}	
 }
-char* send_udp(IPV4 ip, u16 port, char* buf, int size, int* recv_size)
+char* send_udp(IPV4 ip, uint16_t port, char* buf, int size, int* recv_size)
 {
 	int i;
 	TRANS_UDP* data = (TRANS_UDP*)NET_TX_BUF;
@@ -217,11 +217,11 @@ char* send_udp(IPV4 ip, u16 port, char* buf, int size, int* recv_size)
 	data->ip.type = 0x11; //icmp 0x1, udp 0x11, tcp 0x6
 	data->ip.ip_src = IPADDR_LOCAL;
 	data->ip.ip_dst =ip;
-	data->ip.checksum = NET16( checksum((u8*)&data->ip, sizeof(data->ip), 0) );
+	data->ip.checksum = NET16( checksum((uint8_t*)&data->ip, sizeof(data->ip), 0) );
 	data->udp.port_src = PORT_LOCAL;
 	data->udp.port_dest = port?NET16(port):PORT_REMOTE;
 	data->udp.udp_len = NET16(size + sizeof(data->udp));
-	data->udp.checksum =  checksum((u8*)&data->udp, sizeof data->udp + size, 0) ;
+	data->udp.checksum =  checksum((uint8_t*)&data->udp, sizeof data->udp + size, 0) ;
 	//udp persudo-header addition cs
 	{
 		HDR_UDP_PERSUDO hup;
@@ -229,7 +229,7 @@ char* send_udp(IPV4 ip, u16 port, char* buf, int size, int* recv_size)
 		hup.ip_dst = data->ip.ip_dst;
 		hup.type = NET16(0x0011);
 		hup.len = data->udp.udp_len;
-		data->udp.checksum = NET16(checksum((u8*)&hup, sizeof(hup), data->udp.checksum));
+		data->udp.checksum = NET16(checksum((uint8_t*)&hup, sizeof(hup), data->udp.checksum));
 	}
 	eth_send((char*)data, sizeof(TRANS_UDP)+size);
 	recv_udp_buf = 0;

@@ -25,7 +25,7 @@ V0.11	06/20/2001	REG_0A bit3=1, default enable BP with DA match
 		R17 = (R17 & 0xfff0) | NF
 
 v1.00			modify by simon 2001.9.5
-	                change for kernel 2.4.x
+			change for kernel 2.4.x
 
 v1.1   11/09/2001	fix force mode bug
 
@@ -56,10 +56,10 @@ v1.2   03/18/2003       Weilun Huang <weilun_huang@davicom.com.tw>:
 			with a 200MHz Atmel AT91SAM9261 core
 
 =======================================
-	
-	09/29/2011	Ported to NiuBoot for OpenBoard(SWORD) imx233 by 
-			Orson Zhai <orsonzhai@gmail.com> 
-	
+
+	09/29/2011	Ported to NiuBoot for OpenBoard(SWORD) imx233 by
+			Orson Zhai <orsonzhai@gmail.com>
+
 TODO: external MII is not functional, only internal at the moment.
 */
 /*
@@ -74,18 +74,16 @@ TODO: external MII is not functional, only internal at the moment.
 //#include <string.h>
 //headers from niuboot
 #include "utils.h"
+#include "types.h"
 #include "gpmi.h"
 #include "init.h"
 
 
 //following added by zhai
 #define DM9000_DATA 0
-#define DM9000_IO 0	
+#define DM9000_IO 0
 #define CONFIG_DM9000_BASE 0
 
-typedef unsigned int u32;
-typedef unsigned char u8;
-typedef unsigned short u16;
 #define NAMESIZE 16
 struct eth_device {
 	char name[NAMESIZE];
@@ -98,7 +96,7 @@ struct eth_device {
 	int  (*recv) (struct eth_device*,void(*)(char*,int));
 	void (*halt) (struct eth_device*);
 #ifdef CONFIG_MCAST_TFTP
-	int (*mcast) (struct eth_device*, u32 ip, u8 set);
+	int (*mcast) (struct eth_device*, uint32_t ip, uint8_t set);
 #endif
 	struct eth_device *next;
 	void *priv;
@@ -134,20 +132,20 @@ char* NetRxPackets[]={(char*)0x6000}; //receiving buffer	address
 
 /* Structure/enum declaration ------------------------------- */
 typedef struct board_info {
-	u32 runt_length_counter;	/* counter: RX length < 64byte */
-	u32 long_length_counter;	/* counter: RX length > 1514byte */
-	u32 reset_counter;	/* counter: RESET */
-	u32 reset_tx_timeout;	/* RESET caused by TX Timeout */
-	u32 reset_rx_status;	/* RESET caused by RX Statsus wrong */
-	u16 tx_pkt_cnt;
-	u16 queue_start_addr;
-	u16 dbug_cnt;
-	u8 phy_addr;
-	u8 device_wait_reset;	/* device state */
+	uint32_t runt_length_counter;	/* counter: RX length < 64byte */
+	uint32_t long_length_counter;	/* counter: RX length > 1514byte */
+	uint32_t reset_counter;	/* counter: RESET */
+	uint32_t reset_tx_timeout;	/* RESET caused by TX Timeout */
+	uint32_t reset_rx_status;	/* RESET caused by RX Statsus wrong */
+	uint16_t tx_pkt_cnt;
+	uint16_t queue_start_addr;
+	uint16_t dbug_cnt;
+	uint8_t phy_addr;
+	uint8_t device_wait_reset;	/* device state */
 	unsigned char srom[128];
 	void (*outblk)(volatile void *data_ptr, int count);
 	void (*inblk)(void *data_ptr, int count);
-	void (*rx_status)(u16 *RxStatus, u16 *RxLen);
+	void (*rx_status)(uint16_t *RxStatus, uint16_t *RxLen);
 	struct eth_device netdev;
 } board_info_t;
 static board_info_t dm9000_info;
@@ -155,20 +153,20 @@ static board_info_t dm9000_info;
 
 /* function declaration ------------------------------------- */
 static int dm9000_probe(void);
-static u16 phy_read(int);
-static void phy_write(int, u16);
-static u8 DM9000_ior(int);
-static void DM9000_iow(int reg, u8 value);
+static uint16_t phy_read(int);
+static void phy_write(int, uint16_t);
+static uint8_t DM9000_ior(int);
+static void DM9000_iow(int reg, uint8_t value);
 
 /* DM9000 network board routine ---------------------------- */
 
 //rewrite 8bit io func for niuboot-sword case, zhai
-#define DM9000_outb(d,r) ( *(volatile u8 *)r = d )
-#define DM9000_outw(d,r) ( *(volatile u16 *)r = d )
-#define DM9000_outl(d,r) ( *(volatile u32 *)r = d )
-#define DM9000_inb(r) (*(volatile u8 *)r)
-#define DM9000_inw(r) (*(volatile u16 *)r)
-#define DM9000_inl(r) (*(volatile u32 *)r)
+#define DM9000_outb(d,r) ( *(volatile uint8_t *)r = d )
+#define DM9000_outw(d,r) ( *(volatile uint16_t *)r = d )
+#define DM9000_outl(d,r) ( *(volatile uint32_t *)r = d )
+#define DM9000_inb(r) (*(volatile uint8_t *)r)
+#define DM9000_inw(r) (*(volatile uint16_t *)r)
+#define DM9000_inl(r) (*(volatile uint32_t *)r)
 
 #ifdef CONFIG_DM9000_DEBUG
 static void
@@ -192,60 +190,60 @@ static void dm9000_outblk_8bit(volatile void *data_ptr, int count)
 	int i;
 	char tmp=0;
 	for (i = 0; i < count; i++)
-//		DM9000_outb((((u8 *) data_ptr)[i] & 0xff), DM9000_DATA);
-	{	
-	gpmi_dm9000_write_data_bulk(((u8*)data_ptr)+i, 1);
+//		DM9000_outb((((uint8_t *) data_ptr)[i] & 0xff), DM9000_DATA);
+	{
+	gpmi_dm9000_write_data_bulk(((uint8_t*)data_ptr)+i, 1);
 	gpmi_dm9000_read_data_bulk(&tmp,1);
-	printf("data[%x]=%x\n",i,tmp); 
+	printf("data[%x]=%x\n",i,tmp);
 	}
 }
 
 static void dm9000_outblk_16bit(volatile void *data_ptr, int count)
 {
 	int i;
-	u32 tmplen = (count + 1) / 2;
+	uint32_t tmplen = (count + 1) / 2;
 
 	for (i = 0; i < tmplen; i++)
-		DM9000_outw(((u16 *) data_ptr)[i], DM9000_DATA);
+		DM9000_outw(((uint16_t *) data_ptr)[i], DM9000_DATA);
 }
 static void dm9000_outblk_32bit(volatile void *data_ptr, int count)
 {
 	int i;
-	u32 tmplen = (count + 3) / 4;
+	uint32_t tmplen = (count + 3) / 4;
 
 	for (i = 0; i < tmplen; i++)
-		DM9000_outl(((u32 *) data_ptr)[i], DM9000_DATA);
+		DM9000_outl(((uint32_t *) data_ptr)[i], DM9000_DATA);
 }
 
 static void dm9000_inblk_8bit(void *data_ptr, int count)
 {
 	int i;
 	for (i = 0; i < count; i++)
-	//	((u8 *) data_ptr)[i] = DM9000_inb(DM9000_DATA);
-		
-	gpmi_dm9000_read_data_bulk(((u8*)data_ptr)+i, 1);
+	//	((uint8_t *) data_ptr)[i] = DM9000_inb(DM9000_DATA);
+
+	gpmi_dm9000_read_data_bulk(((uint8_t*)data_ptr)+i, 1);
 }
 
 static void dm9000_inblk_16bit(void *data_ptr, int count)
 {
 	int i;
-	u32 tmplen = (count + 1) / 2;
+	uint32_t tmplen = (count + 1) / 2;
 
 	for (i = 0; i < tmplen; i++)
-		((u16 *) data_ptr)[i] = DM9000_inw(DM9000_DATA);
+		((uint16_t *) data_ptr)[i] = DM9000_inw(DM9000_DATA);
 }
 static void dm9000_inblk_32bit(void *data_ptr, int count)
 {
 	int i;
-	u32 tmplen = (count + 3) / 4;
+	uint32_t tmplen = (count + 3) / 4;
 
 	for (i = 0; i < tmplen; i++)
-		((u32 *) data_ptr)[i] = DM9000_inl(DM9000_DATA);
+		((uint32_t *) data_ptr)[i] = DM9000_inl(DM9000_DATA);
 }
 
-static void dm9000_rx_status_32bit(u16 *RxStatus, u16 *RxLen)
+static void dm9000_rx_status_32bit(uint16_t *RxStatus, uint16_t *RxLen)
 {
-	u32 tmpdata;
+	uint32_t tmpdata;
 
 	DM9000_outb(DM9000_MRCMD, DM9000_IO);
 
@@ -255,7 +253,7 @@ static void dm9000_rx_status_32bit(u16 *RxStatus, u16 *RxLen)
 }
 
 
-static void dm9000_rx_status_16bit(u16 *RxStatus, u16 *RxLen)
+static void dm9000_rx_status_16bit(uint16_t *RxStatus, uint16_t *RxLen)
 {
 	DM9000_outb(DM9000_MRCMD, DM9000_IO);
 
@@ -263,7 +261,7 @@ static void dm9000_rx_status_16bit(u16 *RxStatus, u16 *RxLen)
 	*RxLen = __le16_to_cpu(DM9000_inw(DM9000_DATA));
 }
 
-static void dm9000_rx_status_8bit(u16 *RxStatus, u16 *RxLen)
+static void dm9000_rx_status_8bit(uint16_t *RxStatus, uint16_t *RxLen)
 {
 	//DM9000_outb(DM9000_MRCMD, DM9000_IO);
 	gpmi_dm9000_write_reg_index(DM9000_MRCMD);
@@ -274,11 +272,11 @@ static void dm9000_rx_status_8bit(u16 *RxStatus, u16 *RxLen)
 	    __le16_to_cpu(DM9000_inb(DM9000_DATA) +
 			  (DM9000_inb(DM9000_DATA) << 8));
 	*/
-	gpmi_dm9000_read_data_bulk((u8*)RxStatus, 1);
-	gpmi_dm9000_read_data_bulk(((u8*)RxStatus)+1, 1);
+	gpmi_dm9000_read_data_bulk((uint8_t*)RxStatus, 1);
+	gpmi_dm9000_read_data_bulk(((uint8_t*)RxStatus)+1, 1);
 
-	gpmi_dm9000_read_data_bulk((u8*)RxLen, 1);
-	gpmi_dm9000_read_data_bulk(((u8*)RxLen)+1, 1);
+	gpmi_dm9000_read_data_bulk((uint8_t*)RxLen, 1);
+	gpmi_dm9000_read_data_bulk(((uint8_t*)RxLen)+1, 1);
 
 }
 
@@ -288,7 +286,7 @@ static void dm9000_rx_status_8bit(u16 *RxStatus, u16 *RxLen)
 int
 dm9000_probe(void)
 {
-	u32 id_val;
+	uint32_t id_val;
 	id_val = DM9000_ior(DM9000_VIDL);
 	id_val |= DM9000_ior(DM9000_VIDH) << 8;
 	id_val |= DM9000_ior(DM9000_PIDL) << 16;
@@ -344,7 +342,7 @@ dm9000_reset(void)
 static int dm9000_init(struct eth_device *dev/*, bd_t *bd*/)
 {
 	int i, oft, lnk;
-	u8 io_mode;
+	uint8_t io_mode;
 	struct board_info *db = &dm9000_info;
 
 	DM9000_DBG("%s\n", __func__);
@@ -479,7 +477,7 @@ static int dm9000_send(struct eth_device *netdev, volatile void *packet,
 	/* Set TX length to DM9000 */
 	DM9000_iow(DM9000_TXPLL, length & 0xff);
 	DM9000_iow(DM9000_TXPLH, (length >> 8) & 0xff);
-	printf("length = %x, %x\n", DM9000_ior(DM9000_TXPLL), DM9000_ior(DM9000_TXPLH)); 
+	printf("length = %x, %x\n", DM9000_ior(DM9000_TXPLL), DM9000_ior(DM9000_TXPLH));
 
 	/* Issue TX polling command */
 	DM9000_iow(DM9000_TCR, TCR_TXREQ); /* Cleared after TX complete */
@@ -520,13 +518,13 @@ static void dm9000_halt(struct eth_device *netdev)
 */
 static int dm9000_rx(struct eth_device *netdev, void (*NetReceive)(char *, int))	//zhai added callback functions
 {
-	u8 rxbyte, *rdptr = (u8 *) NetRxPackets[0];
-	u16 RxStatus, RxLen = 0;
+	uint8_t rxbyte, *rdptr = (uint8_t *) NetRxPackets[0];
+	uint16_t RxStatus, RxLen = 0;
 	struct board_info *db = &dm9000_info;
 
 	/* Check packet ready or not, we must check
 	   the ISR status first for DM9000A */
-	
+
 	if (!(DM9000_ior(DM9000_ISR) & 0x01)) /* Rx-ISR bit must be set. */
 	{
 		printf("rx-isr bit=%x\n",DM9000_ior(DM9000_ISR));
@@ -543,7 +541,7 @@ static int dm9000_rx(struct eth_device *netdev, void (*NetReceive)(char *, int))
 		/* Get most updated data,
 		   only look at bits 0:1, See application notes DM9000 */
 		//rxbyte = DM9000_inb(DM9000_DATA) & 0x03;
-		gpmi_dm9000_read_data_bulk((u8*)&rxbyte, 1); //include dummy read
+		gpmi_dm9000_read_data_bulk((uint8_t*)&rxbyte, 1); //include dummy read
 		rxbyte &= 0x03;
 		/* Status check: this byte must be 0 or 1 */
 		if (rxbyte > DM9000_PKT_RDY) {
@@ -599,7 +597,7 @@ static int dm9000_rx(struct eth_device *netdev, void (*NetReceive)(char *, int))
   Read a word data from SROM
 */
 #if !defined(CONFIG_DM9000_NO_SROM)
-void dm9000_read_srom_word(int offset, u8 *to)
+void dm9000_read_srom_word(int offset, uint8_t *to)
 {
 	DM9000_iow(DM9000_EPAR, offset);
 	DM9000_iow(DM9000_EPCR, 0x4);
@@ -609,7 +607,7 @@ void dm9000_read_srom_word(int offset, u8 *to)
 	to[1] = DM9000_ior(DM9000_EPDRH);
 }
 
-void dm9000_write_srom_word(int offset, u16 val)
+void dm9000_write_srom_word(int offset, uint16_t val)
 {
 	DM9000_iow(DM9000_EPAR, offset);
 	DM9000_iow(DM9000_EPDRH, ((val >> 8) & 0xff));
@@ -642,15 +640,15 @@ static void dm9000_get_enetaddr(struct eth_device *dev)
 /*
    Read a byte from I/O port
 */
-static u8
+static uint8_t
 DM9000_ior(int reg)
 {
 	/*DM9000_outb(reg, DM9000_IO);
 	return DM9000_inb(DM9000_DATA);
 	*/
-	u8 val;
+	uint8_t val;
 	gpmi_dm9000_write_reg_index(reg);
-	gpmi_dm9000_read_data_bulk(&val, sizeof(u8));
+	gpmi_dm9000_read_data_bulk(&val, sizeof(uint8_t));
 	return val;
 }
 
@@ -658,22 +656,22 @@ DM9000_ior(int reg)
    Write a byte to I/O port
 */
 static void
-DM9000_iow(int reg, u8 value)
+DM9000_iow(int reg, uint8_t value)
 {
 /*	DM9000_outb(reg, DM9000_IO);
 	DM9000_outb(value, DM9000_DATA);
 	*/
 	gpmi_dm9000_write_reg_index(reg);
-	gpmi_dm9000_write_data_bulk(&value, sizeof(u8));
+	gpmi_dm9000_write_data_bulk(&value, sizeof(uint8_t));
 }
 
 /*
    Read a word from phyxcer
 */
-static u16
+static uint16_t
 phy_read(int reg)
 {
-	u16 val;
+	uint16_t val;
 
 	/* Fill the phyxcer register into REG_0C */
 	DM9000_iow(DM9000_EPAR, DM9000_PHY | reg);
@@ -691,7 +689,7 @@ phy_read(int reg)
    Write a word to phyxcer
 */
 static void
-phy_write(int reg, u16 value)
+phy_write(int reg, uint16_t value)
 {
 
 	/* Fill the phyxcer register into REG_0C */
@@ -734,4 +732,3 @@ void dm9000_recv(void (*callback)(char *,int))
 	struct eth_device *dev = &(dm9000_info.netdev);
 	dev->recv(dev, callback);
 }
-

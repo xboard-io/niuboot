@@ -42,12 +42,14 @@ char *strcpy(char *s1, const char *s2)
 
 	return s;
 }
-char * strcat( char *dst, char *src)
+
+char *strcat( char *dst, char *src)
 {
 	char *s = dst + strlen(dst);
 	strcpy(s, src);
 	return dst; 
 }
+
 int strncmp(const char *str1, const char *str2, int n) {
     int c=0;
     while(*str1 && *str2 && c<n) {
@@ -108,6 +110,7 @@ void *memcmp(void *s1, const void *s2, int n)
 
 	return 0;
 }
+
 unsigned char _ctype[] = {
     _C,_C,_C,_C,_C,_C,_C,_C,            /* 0-7 */
     _C,_C|_S,_C|_S,_C|_S,_C|_S,_C|_S,_C,_C,     /* 8-15 */
@@ -176,6 +179,7 @@ char* itox( unsigned int num )
 	}	
 	return hex;
 }
+
 int printf(const char* format, ...)
 {
 	int i;
@@ -202,6 +206,7 @@ int printf(const char* format, ...)
 	}
 	return i;
 }
+
 char* puts( const char* s )
 {
 	char* no_standard_return =(char*) s;
@@ -209,22 +214,24 @@ char* puts( const char* s )
 		putchar(*s++);
 	return no_standard_return;
 }
+
 char* gets( char *s )
 {
 	return 0;
 }
+
 int putchar(int c)
 {
 	serial_putc(c);
 	return c;
 }
+
 int getchar(void)
 {
 	return serial_getc();
 }
 
 void sys_reboot() {
-    // Reset the digital sections of the chip, but not the power modules.
-    //HW_CLKCTRL_RESET_WR(1);
+	/* Reset the digital sections of the chip, but not the power modules. */
+	/* HW_CLKCTRL_RESET_WR(1); */
 }
-
