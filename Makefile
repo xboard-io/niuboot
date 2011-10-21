@@ -1,8 +1,7 @@
-CURRENTDIR	= .
-SRCDIR		= $(CURRENTDIR)/src
-OUTPUTDIR	= $(CURRENTDIR)/output
+SRCDIR		= $(CURDIR)/src
+OUTPUTDIR	= $(CURDIR)/output
 
-INCLUDEDIR	= $(CURRENTDIR)/include
+INCLUDEDIR	= $(CURDIR)/include
 COMPILER_DIR	= /home/zhai/arm-linux/arm-2011.03/lib/gcc/arm-none-eabi/4.5.2
 
 # Linker script 
@@ -28,25 +27,17 @@ OBJCOPY	= $(CROSS_COMPILE)objcopy
 OBJDUMP	= $(CROSS_COMPILE)objdump
 
 LIBGCCDIR = $(dir $(shell $(CC) -print-libgcc-file-name))
-CFLAGS 	= -Wall -I$(INCLUDEDIR) -I$(COMPILER_DIR)/include -nostdinc -fno-builtin -O -g
-LDFLAGS = -static -nostdlib -T $(BOOT_LAYOUT_OUT) -L$(LIBGCCDIR)  -lgcc
-
-CFLAGS += -DSWORD
-
+CFLAGS 	+= -Wall -I$(INCLUDEDIR) -I$(COMPILER_DIR)/include -nostdinc -fno-builtin -O -g
+CFLAGS  += -DSWORD
+LDFLAGS += -static -nostdlib -T $(BOOT_LAYOUT_OUT) -L$(LIBGCCDIR)  -lgcc
 
 # Generic code
 SRC_OBJS = entry.o serial.o main.o utils.o init.o gpmi.o dm9000x.o net.o
 
-
 NIUBOOT_OBJS = $(addprefix $(SRCDIR)/, $(SRC_OBJS))
-#		  $(addprefix $(BOARDDIR)/, $(BOARD_OBJS)) \
-#		  $(addprefix $(HWDIR)/, $(HW_OBJS))
 
 # Default goal
-.PHONY: all
 all: build
-
-
 
 #
 # Define an implicit rule for assembler files
