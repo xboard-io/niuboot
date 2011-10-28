@@ -1,22 +1,18 @@
-SRCDIR		= $(CURDIR)/src
-OUTPUTDIR	= $(CURDIR)/output
+COMPILER_DIR	=
+CROSS_COMPILE	?= arm-none-eabi-
 
+SRCDIR		= $(CURDIR)/src
 INCLUDEDIR	= $(CURDIR)/include
-COMPILER_DIR	= /home/zhai/arm-linux/arm-2011.03/lib/gcc/arm-none-eabi/4.5.2
+OUTPUTDIR	= $(CURDIR)/output
 
 # Linker script 
 BASE_ADDR	?= 0x00000000
 BOOT_LAYOUT_IN	= $(SRCDIR)/niuboot.ld.in
 BOOT_LAYOUT_OUT	= $(OUTPUTDIR)/niuboot.ld
 
-
-# Output ELF image
+# Output ELF/BIN binary image
 NIUBOOT_ELF	= $(OUTPUTDIR)/niuboot
-
-# Output binary image
 NIUBOOT_BIN	= $(OUTPUTDIR)/niuboot.bin
-
-CROSS_COMPILE ?= arm-none-eabi-
 
 AS	= $(CROSS_COMPILE)as
 CC	= $(CROSS_COMPILE)gcc
@@ -25,11 +21,17 @@ CPP	= $(CROSS_COMPILE)cpp
 STRIP	= $(CROSS_COMPILE)strip
 OBJCOPY	= $(CROSS_COMPILE)objcopy
 OBJDUMP	= $(CROSS_COMPILE)objdump
+NM	= $(CROSS_COMPILE)nm
 
 LIBGCCDIR = $(dir $(shell $(CC) -print-libgcc-file-name))
-CFLAGS 	+= -Wall -I$(INCLUDEDIR) -I$(COMPILER_DIR)/include -nostdinc -fno-builtin -O -g
+
+CFLAGS 	+= -I$(INCLUDEDIR) -I$(LIBGCCDIR)/include
+CFLAGS 	+= -Wall -O -g
+CFLAGS 	+= -nostdinc -fno-builtin
 CFLAGS  += -DSWORD
-LDFLAGS += -static -nostdlib -T $(BOOT_LAYOUT_OUT) -L$(LIBGCCDIR)  -lgcc
+
+LDFLAGS += -static -nostdlib
+LDFLAGS += -L$(LIBGCCDIR) -lgcc -T $(BOOT_LAYOUT_OUT)
 
 # Generic code
 SRC_OBJS = entry.o serial.o main.o utils.o init.o gpmi.o dm9000x.o net.o
@@ -37,7 +39,7 @@ SRC_OBJS = entry.o serial.o main.o utils.o init.o gpmi.o dm9000x.o net.o
 NIUBOOT_OBJS = $(addprefix $(SRCDIR)/, $(SRC_OBJS))
 
 # Default goal
-all: build
+all: build_prep $(NIUBOOT_BIN)
 
 #
 # Define an implicit rule for assembler files
@@ -52,31 +54,26 @@ all: build
 #
 # Make targets
 #
-.PHONY: build build_prep clean
-
-build: build_prep $(NIUBOOT_BIN)
+.PHONY: build_prep
 
 build_prep:
 	mkdir -p $(OUTPUTDIR)
 
-clean:
-	@echo Cleaning...
-	@echo Files:
-	rm -rf $(NIUBOOT_OBJS) $(BOOT_LAYOUT_OUT)
-	@echo Build output:
-	rm -rf $(OUTPUTDIR)
-
-##
-## Rules to link and convert niuboot image
-## 
-
+#
+# Rules to link and convert niuboot image
+# 
 $(NIUBOOT_BIN): $(NIUBOOT_ELF)
 	$(OBJCOPY) -R -S -O binary -R .note -R .note.gnu.build-id -R .comment $< $@
 
 $(NIUBOOT_ELF): $(NIUBOOT_OBJS) $(BOOT_LAYOUT_OUT)
 	$(LD) -o $@ $(NIUBOOT_OBJS) $(LDFLAGS)
-	@nm -n $@ > $@.map
+	$(NM) -n $@ > $@.map
 
 $(BOOT_LAYOUT_OUT): $(BOOT_LAYOUT_IN)
 	$(CPP) -P -DBASE_ADDR=$(BASE_ADDR) -o $@ $<
 
+clean:
+	@echo Cleaning...
+	rm -rf $(NIUBOOT_OBJS) $(BOOT_LAYOUT_OUT)
+	@echo Build output:
+	rm -rf $(OUTPUTDIR)
