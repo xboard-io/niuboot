@@ -41,7 +41,7 @@ NIUBOOT_OBJS  = $(addprefix $(SRCDIR)/, $(SRC_OBJS))
 NIUBOOT_HEADS = $(addprefix $(INCLUDEDIR)/, $(SRC_HEADS))
 
 # Default goal
-all: build_prep $(NIUBOOT_BIN)
+all: $(OUTPUTDIR) $(NIUBOOT_BIN)
 
 #
 # Define an implicit rule for assembler files
@@ -53,13 +53,8 @@ all: build_prep $(NIUBOOT_BIN)
 %.o: %.c ${NIUBOOT_HEADS}
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-#
-# Make targets
-#
-.PHONY: build_prep
-
-build_prep:
-	mkdir -p $(OUTPUTDIR)
+$(OUTPUTDIR):
+	mkdir -p $@
 
 #
 # Rules to link and convert niuboot image
@@ -74,6 +69,7 @@ $(NIUBOOT_ELF): $(NIUBOOT_OBJS) $(BOOT_LAYOUT_OUT)
 $(BOOT_LAYOUT_OUT): $(BOOT_LAYOUT_IN)
 	$(CPP) -P -DBASE_ADDR=$(BASE_ADDR) -o $@ $<
 
+.PHONY: clean
 clean:
 	@echo Cleaning...
 	rm -rf $(NIUBOOT_OBJS) $(BOOT_LAYOUT_OUT)
