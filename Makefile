@@ -34,9 +34,11 @@ LDFLAGS += -static -nostdlib
 LDFLAGS += -L$(LIBGCCDIR) -lgcc -T $(BOOT_LAYOUT_OUT)
 
 # Generic code
-SRC_OBJS = entry.o serial.o main.o utils.o init.o gpmi.o dm9000x.o net.o
+SRC_OBJS  = entry.o serial.o main.o utils.o init.o gpmi.o dm9000x.o net.o
+SRC_HEADS = dm9000x.h gpmi.h init.h main.h net.h regs_imx233.h serial.h types.h utils.h
 
-NIUBOOT_OBJS = $(addprefix $(SRCDIR)/, $(SRC_OBJS))
+NIUBOOT_OBJS  = $(addprefix $(SRCDIR)/, $(SRC_OBJS))
+NIUBOOT_HEADS = $(addprefix $(INCLUDEDIR)/, $(SRC_HEADS))
 
 # Default goal
 all: build_prep $(NIUBOOT_BIN)
@@ -48,7 +50,7 @@ all: build_prep $(NIUBOOT_BIN)
 %.o: %.S
 	$(CC) -c $(CFLAGS) -D__ASSEMBLY__ -o $@ $<
 
-%.o: %.c
+%.o: %.c ${NIUBOOT_HEADS}
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 #
