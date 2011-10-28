@@ -188,13 +188,14 @@ dump_regs(void)
 static void dm9000_outblk_8bit(volatile void *data_ptr, int count)
 {
 	int i;
-	char tmp=0;
-	for (i = 0; i < count; i++)
-//		DM9000_outb((((uint8_t *) data_ptr)[i] & 0xff), DM9000_DATA);
-	{
-	gpmi_dm9000_write_data_bulk(((uint8_t*)data_ptr)+i, 1);
-	gpmi_dm9000_read_data_bulk(&tmp,1);
-	printf("data[%x]=%x\n",i,tmp);
+	unsigned char tmp = 0;
+
+//	DM9000_outb((((uint8_t *) data_ptr)[i] & 0xff), DM9000_DATA);
+
+	for (i = 0; i < count; i++) {
+		gpmi_dm9000_write_data_bulk(((uint8_t*)data_ptr)+i, 1);
+		gpmi_dm9000_read_data_bulk(&tmp,1);
+		printf("data[%x]=%x\n", i, tmp);
 	}
 }
 

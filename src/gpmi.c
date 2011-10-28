@@ -150,7 +150,7 @@ void gpmi_dm9000_write_reg(unsigned int regno, unsigned int regval)
 		while(!(hw_apbh.ctrl[1].dat & (1<<5)));
 		//hw_apbh.ctrl[1].clr = 1<<5;
 }
-void gpmi_dm9000_read_data_bulk(unsigned char* buf, int count)
+void gpmi_dm9000_read_data_bulk(unsigned char *buf, int count)
 {
 	//gpmi-1, dm9000 ethernet, 8bit mode
 	DMA_CMD data_read =
@@ -166,7 +166,7 @@ void gpmi_dm9000_read_data_bulk(unsigned char* buf, int count)
 		0,//unused
 		1,
 		count, //xfer_cnt
-		(unsigned int*)buf,
+		(unsigned int *)buf,
 		{0x01d30000 | (count&0xffff)}
 	};
 		//reset gpmi
@@ -182,7 +182,7 @@ void gpmi_dm9000_read_data_bulk(unsigned char* buf, int count)
 		hw_apbh.ch[5].sema = 0x1;
 		while(!(hw_apbh.ctrl[1].dat & (1<<5)));
 }
-void gpmi_dm9000_write_data_bulk(unsigned char *buf, int count)
+void gpmi_dm9000_write_data_bulk(unsigned int *buf, int count)
 {
 	//gpmi-1, dm9000 ethernet, 8bit mode
 	DMA_CMD data_write =
@@ -330,9 +330,15 @@ unsigned int gpmi_k9f1208_read_id(void)
 
 unsigned int gpmi_k9f1208_read_page(int block, int page, char*buf)
 {
-	volatile unsigned char flash[] = {0x00, 0x00, page|(block<<5)&0xff, (block>>3)&0xff, (block>>11)&0xff};
-	DMA_CMD read_id[2] =
-	{
+	volatile unsigned char flash[] = {
+		0x00,
+		0x00,
+		page | ((block<<5) & 0xff),
+		(block>>3) & 0xff,
+		(block >> 11) & 0xff
+	};
+
+	DMA_CMD read_id[2] = {
 		{
 		&read_id[1],//next command
 		2,//command: 

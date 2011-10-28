@@ -119,18 +119,16 @@ CMD_FUNC_DEF( cmd_test )
 		return 0;
 	}
 	/* word random test */
-	if((argc>=2) && (argv[1][0]=='r'))
-	{
-		volatile unsigned int * src= (unsigned char*) 0xc0000000;
-		volatile unsigned int * dst= (unsigned int*) 0x40000000;
+	if ((argc >= 2) && (argv[1][0] == 'r'))	{
+		volatile unsigned int *src= (unsigned int *) 0xc0000000;
+		volatile unsigned int *dst= (unsigned int *) 0x40000000;
 		unsigned int temp;
 		unsigned int i;
 		unsigned int count;
 
 		count = 0x1000000;
 		printf("word random test\n");
-		for(i=0 ; i < count; i++ )
-		{
+		for(i=0 ; i < count; i++) {
 			temp = random() % 0x1000000 - 4;
 			printf("temp = %x\n", temp);
 			dst[temp] = src[temp];
