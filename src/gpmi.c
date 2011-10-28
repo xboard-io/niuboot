@@ -182,7 +182,7 @@ void gpmi_dm9000_read_data_bulk(unsigned char* buf, int count)
 		hw_apbh.ch[5].sema = 0x1;
 		while(!(hw_apbh.ctrl[1].dat & (1<<5)));
 }
-void gpmi_dm9000_write_data_bulk(unsigned char* buf, int count)
+void gpmi_dm9000_write_data_bulk(unsigned char *buf, int count)
 {
 	//gpmi-1, dm9000 ethernet, 8bit mode
 	DMA_CMD data_write =

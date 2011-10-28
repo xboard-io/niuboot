@@ -1,19 +1,21 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
-char *puts( const char* s );
-char *gets( char *s );
-int putchar( const int c );
-int getchar( void );
+#include "types.h"
+
+char *puts(const char* s);
+char *gets(char *s);
+int putchar(const int c);
+int getchar(void);
 int printf(const char* format, ...);
 int strlen(const char *s);
 char *strcpy(char *s1, const char *s2);
 char *strcat( char *dst, char *src);
-int strncmp(const char *str1, const char *str2, int n);
-int strcmp(const char *str1, const char *str2);
-void *memcpy(void *s1, const void *s2, int n);
+int strncmp(const char *cs, const char *ct, size_t count);
+int strcmp(const char *cs, const char *ct);
+void *memcpy(void *s1, const void *s2, size_t n);
 void *memset(void *s1, int c, int n);
-void *memcmp(void *s1, const void *s2, int n);
+int memcmp(const void *cs, const void *ct, size_t count);
 
 void sys_reboot();
 

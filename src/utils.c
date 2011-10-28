@@ -1,27 +1,7 @@
 #include "utils.h"
 #include "serial.h"
+#include "types.h"
 #include <stdarg.h>
-/* minimal implementation of string functions */
-/*
-char *strstr(const char *s1, const char *s2)
-{
-	int i;
-
-	if (*s1 == '\0')
-		return *s2 ? 0 : (char *)s1;
-
-	while (*s1) {
-		for (i = 0; ; i++) {
-			if (s2[i] == '\0')
-				return (char *)s1;
-			if (s2[i] != s1[i])
-				break;
-		}
-		s1++;
-	}
-	return 0;
-}
-*/
 
 int strlen(const char *s)
 {
@@ -47,68 +27,66 @@ char *strcat( char *dst, char *src)
 {
 	char *s = dst + strlen(dst);
 	strcpy(s, src);
+
 	return dst; 
 }
 
-int strncmp(const char *str1, const char *str2, int n) {
-    int c=0;
-    while(*str1 && *str2 && c<n) {
-        c++;
-        if(*str1 != *str2)
-            return 1;
-        str1++;
-        str2++;
-    }
+int strncmp(const char *cs, const char *ct, size_t count)
+{
+	signed char __res;
+	size_t n;
 
-    if(!*str1 && !*str2)
-        return 0;
-    if(c >= n)
-        return 0;
-    return 1;
+	n = 0;
+	__res = 0;
+	while (n < count) {
+		if ((__res = *cs - *ct++) != 0 || !*cs++)
+			break;
+		n++;
+	}
+	return __res;
 }
 
-int strcmp(const char *str1, const char *str2) {
-    while(*str1 && *str2) {
-        if(*str1 != *str2)
-            return 1;
-        str1++;
-        str2++;
-    }
+int strcmp(const char *cs, const char *ct)
+{
+	signed char __res;
 
-    if(!*str1 && !*str2)
-        return 0;
-    return 1;
+	while (1) {
+		if ((__res = *cs - *ct++) != 0 || !*cs++)
+			break;
+	}
+	return __res;
 }
 
-void *memcpy(void *s1, const void *s2, int n)
+void *memcpy(void *s1, const void *s2, size_t n)
 {
 	char *dst = s1;
 	const char *src = s2;
 
-	while (n-- > 0)
+	while (n--)
 		*dst++ = *src++;
 
 	return s1;
 }
+
 void *memset(void *s1, int c, int n)
 {
 	char *dst = s1;
 
-	while (n-- > 0)
-		*dst++ = c&0xff;
+	while (n--)
+		*dst++ = c & 0xff;
 
 	return s1;
 }
-void *memcmp(void *s1, const void *s2, int n)
+
+int memcmp(const void *cs, const void *ct, size_t count)
 {
-	char *dst = s1;
-	char *src = s2;
+	const unsigned char *su1, *su2;
+	int res = 0;
 
-	while (n-- > 0)
-		if(*dst++ != *src++)
-			return --dst<--src?*dst:*src;  
-
-	return 0;
+	for (su1 = cs, su2 = ct; 0 < count; ++su1, ++su2, count--)
+		if ((res = *su1 - *su2) != 0)
+			break;
+	return res;
 }
 
 unsigned char _ctype[] = {
@@ -165,14 +143,13 @@ unsigned long simple_strtoul(const char *cp,char **endp,unsigned int base)
     return result;
 }
 
-char* itox( unsigned int num )
+char *itox(unsigned int num)
 {
 	static char hex[12] = "0x";
 	int i, pos;
 	const char lut[]="0123456789ABCDEF";
 	
-	for(i=0, pos=2; i<8; i++)
-	{
+	for(i = 0, pos = 2; i < 8; i++) {
 		if( (hex[pos] = lut[ (num<<4*i)>>28 ]) != '0' ||  pos != 2 )
 			pos++;
 		hex[pos+1]='\0';
@@ -180,7 +157,7 @@ char* itox( unsigned int num )
 	return hex;
 }
 
-int printf(const char* format, ...)
+int printf(const char *format, ...)
 {
 	int i;
 	va_list arg_list;
@@ -207,15 +184,16 @@ int printf(const char* format, ...)
 	return i;
 }
 
-char* puts( const char* s )
+char *puts(const char *s)
 {
-	char* no_standard_return =(char*) s;
-	while(*s)
+	char *no_standard_return =(char*) s;
+	while (*s)
 		putchar(*s++);
+
 	return no_standard_return;
 }
 
-char* gets( char *s )
+char *gets(char *s)
 {
 	return 0;
 }
@@ -231,7 +209,8 @@ int getchar(void)
 	return serial_getc();
 }
 
-void sys_reboot() {
+void sys_reboot()
+{
 	/* Reset the digital sections of the chip, but not the power modules. */
 	/* HW_CLKCTRL_RESET_WR(1); */
 }

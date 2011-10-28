@@ -32,12 +32,9 @@ extern void *get_heap_start(void);
 CMD_FUNC_DEF( cmd_dm )
 {
 	const char usage[] = "dm - dm9000 interface debug\n"
-			"\tdm <reg_no> [val]\n" ;
-	int i;
-	char *ip_str = (char*)argv[1];
+			     "\tdm <reg_no> [val]\n";
 
-	if(argc < 2)
-	{
+	if(argc < 2) {
 		puts(usage);
 		return 0;
 	}
@@ -469,14 +466,14 @@ CMD_FUNC_DEF( cmd_ping )
 	const char usage[] = "ping - send ARP to host machine\n"
 			"\tping <ipv4>\n" ;
 	int i;
-	char *ip_str = (char*)argv[1];
 
-	if(argc < 2)
-	{
+	if (argc < 2) {
 		puts(usage);
 		return 0;
 	}
 #if 1
+	char *ip_str = (char*)argv[1];
+
 	IPV4 ip = {{0,0,0,0}};
 	for(i=0; i<4; i++, ip_str++)
 	{

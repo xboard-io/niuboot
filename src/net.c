@@ -1,19 +1,16 @@
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t, n16;
-typedef unsigned int uint32_t, n32;
-typedef struct {uint8_t b[6];} n48;
-
 #include "dm9000x.h"
 #include "net.h"
 #define NET_TX_BUF 0x5000
 #define NET_RX_BUF 0x31180000
-//#include <string.h>
 #include "utils.h"
 #include "init.h"
 
 #define eth_send dm9000_trans
 #define eth_recv dm9000_recv
 
+typedef unsigned short n16;
+typedef unsigned int n32;
+typedef struct {uint8_t b[6];} n48;
 
 typedef struct
 {
