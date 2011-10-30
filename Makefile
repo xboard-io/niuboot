@@ -28,10 +28,9 @@ LIBGCCDIR = $(dir $(shell $(CC) -print-libgcc-file-name))
 CFLAGS 	+= -I$(INCLUDEDIR) -I$(LIBGCCDIR)/include
 CFLAGS 	+= -Wall -O -g
 CFLAGS 	+= -nostdinc -fno-builtin
-CFLAGS  += -DSWORD
 
 LDFLAGS += -static -nostdlib
-LDFLAGS += -L$(LIBGCCDIR) -lgcc -T $(BOOT_LAYOUT_OUT)
+LDFLAGS += -L$(LIBGCCDIR) -lgcc -T$(BOOT_LAYOUT_OUT)
 
 # Generic code
 SRC_OBJS  = entry.o serial.o main.o utils.o init.o gpmi.o dm9000x.o net.o
