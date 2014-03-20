@@ -47,7 +47,7 @@ int init_soc(int soc_type)
 			//init_dma();
 
 			serial_init(); //heading by serial_ means this function is from serial.c
-			init_sdram();
+	//		init_sdram();
 			//gpmi_init(); //heading by gpmi_ means this function is from gpmi.c
 //			dm9000_initialize();
 			break;
@@ -210,8 +210,9 @@ void init_all_pins(void)
 {
 	int i;
 	hw_pinctrl.ctrl.set = 0;
-	hw_pinctrl.doe[0].set = 1<<23; //beep 3rd sword
+	/*hw_pinctrl.doe[0].set = 1<<23; //beep 3rd sword
 	hw_pinctrl.dout[0].clr = 1<<23;
+	*/
    	/*we use bank1-pin26,27 (duart_tx&rx)as LED flash*/
     /*	hw_pinctrl.muxsel[3].set = 0xf00000; 
 	
