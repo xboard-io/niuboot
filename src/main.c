@@ -564,6 +564,44 @@ CMD_FUNC_DEF( cmd_go )
 	return 0;
 }
 
+CMD_FUNC_DEF( cmd_xmodem )
+{
+#if 0
+	const char usage[] = "xmodem - download file to sdram via x-modem protocal\n"
+			"\txmodem <add(hex)> \n"; 
+	if(argc < 2)
+	{
+		putsy(usage);
+		return 0;
+	}
+	/*while(1)
+	{
+		*((unsigned short *)0x402298a4) = 0xaaaa;
+	}*/
+	int addr = simple_strtoul(argv[1],NULL,16);
+	int i,c;
+	//send
+#define SOH 0x01
+#define EOT 0x04
+#define ACK 0x06
+#define NAK 0x15
+#define CAN 0x18
+	for( i=0; i<5; i++)
+	{
+		udelay(1000);
+		putchar('0'+i);
+	}
+	putchar(NAK);
+	while( (c = getchar()) == SOH )
+	{
+		getchar();
+		getchar();
+		//for( i=0; i<
+		*addr++ = getchar();	
+	}
+	return 0;
+#endif
+}
 /*
  * Linear congruential random number generator
  */

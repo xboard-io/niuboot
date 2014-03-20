@@ -49,7 +49,7 @@ int init_soc(int soc_type)
 			serial_init(); //heading by serial_ means this function is from serial.c
 			init_sdram();
 			//gpmi_init(); //heading by gpmi_ means this function is from gpmi.c
-			dm9000_initialize();
+//			dm9000_initialize();
 			break;
 	}
 	return 0;

@@ -48,7 +48,7 @@ typedef struct {
 	reg clr;
 	reg tog;
 }REG;
-#define reg(reg_name) union{ reg reg_name; REG _reg_name##_aligned;}
+#define reg(reg_name) union{ reg reg_name; REG reg_name##_aligned;}
 
 
 typedef struct {

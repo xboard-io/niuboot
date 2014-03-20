@@ -27,7 +27,7 @@ LIBGCCDIR = $(dir $(shell $(CC) -print-libgcc-file-name))
 
 CFLAGS 	+= -I$(INCLUDEDIR) -I$(LIBGCCDIR)/include
 CFLAGS 	+= -Wall -O -g
-CFLAGS 	+= -nostdinc -fno-builtin
+CFLAGS 	+= -nostdinc -fno-builtin -fdump-rtl-expand
 
 LDFLAGS += -static -nostdlib
 LDFLAGS += -L$(LIBGCCDIR) -lgcc -T$(BOOT_LAYOUT_OUT)
@@ -41,7 +41,7 @@ NIUBOOT_HEADS = $(addprefix $(INCLUDEDIR)/, $(SRC_HEADS))
 
 # Default goal
 all: $(OUTPUTDIR) $(NIUBOOT_BIN)
-
+	@echo Do NOT put any useful thing in output folder....
 #
 # Define an implicit rule for assembler files
 # to run them through C preprocessor
