@@ -49,7 +49,7 @@ CMD_FUNC_DEF( cmd_dm )
 		
 	/*char buf[]={0x41,0x42,0x43,0x44,0x45,0x46};
 	gpmi_dm9000_write_reg_index(reg_idx);
-	reg_val = simple_strtoul(argv[2], NULL, 16);
+	reg_val = simple_strtoul(argv[18], NULL, 16);
 	gpmi_dm9000_write_data_bulk(buf, 1);
 	gpmi_dm9000_write_data_bulk(buf+1,1);
 	gpmi_dm9000_write_data_bulk(buf+2,1);
@@ -354,6 +354,7 @@ int cut_cmd(char *cmd, int argv_len, char* argv[])
 	return cnt;
 }
 
+//extern void beep(void);
 int main(void) 
 {
 //	volatile char *ram_addr = ((volatile char *)0x40000000);
@@ -366,7 +367,12 @@ int main(void)
 	init_soc(MCIMX233);
 
 	puts("\n\n\t--NiuBoot v0.9--\n(C) CFFHH Open Embedded Org. 2011\n\tDistributed Under GPLv3\n\n");
-	for(;;)
+	for(;;) /*{ beep(); }*/
+/*	{
+		puts("a");
+		mdelay(100);
+	}
+*/
 	{
 		puts("NIUBOOT# ");
 		get_cmd(cmd_buf);
