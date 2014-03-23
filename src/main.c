@@ -126,14 +126,16 @@ CMD_FUNC_DEF( cmd_test )
 		unsigned int i;
 		unsigned int count;
 
-		count = 0x1000000;
+		count = 0x800000;
 		printf("word random test\n");
 		for(i=0 ; i < count; i++) {
 			temp = random() % 0x1000000 - 4;
-			printf("temp = %x\n", temp);
-			dst[temp] = src[temp];
+			//printf("temp = %x\n", temp);
+			//dst[temp] = src[temp];
+			dst[i] = src[i];
 		}
 		//verify
+		printf("verify...\n");
 		for(i=0 ; i < count; i++ )
 		{
 			if(dst[i] != src[i])
