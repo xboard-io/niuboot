@@ -547,7 +547,7 @@ CMD_FUNC_DEF( cmd_tftp )
 	}
 	return 0;
 }
-
+extern void init_taglist(int);
 CMD_FUNC_DEF( cmd_go )
 {
 	const char usage[] = "go - change PC to add or booting linux kernel with tag_list\n"
@@ -560,11 +560,15 @@ CMD_FUNC_DEF( cmd_go )
 	/*while(1)
 	{
 		*((unsigned short *)0x402298a4) = 0xaaaa;
-	}*/
+	}
 	int block=simple_strtoul(argv[1],NULL,16);
 	int page=simple_strtoul(argv[2],NULL,16);
 	char *buf = (char*)simple_strtoul(argv[3],NULL,16);
 	gpmi_k9f1208_read_page(block,page,buf);
+	*/
+
+	int block=simple_strtoul(argv[1],NULL,16);
+	init_taglist(block);
 	printf("ok\n");
 
 	return 0;
