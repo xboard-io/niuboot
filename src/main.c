@@ -49,7 +49,7 @@ CMD_FUNC_DEF( cmd_dm )
 		
 	/*char buf[]={0x41,0x42,0x43,0x44,0x45,0x46};
 	gpmi_dm9000_write_reg_index(reg_idx);
-	reg_val = simple_strtoul(argv[2], NULL, 16);
+	reg_val = simple_strtoul(argv[18], NULL, 16);
 	gpmi_dm9000_write_data_bulk(buf, 1);
 	gpmi_dm9000_write_data_bulk(buf+1,1);
 	gpmi_dm9000_write_data_bulk(buf+2,1);
@@ -356,6 +356,7 @@ int cut_cmd(char *cmd, int argv_len, char* argv[])
 	return cnt;
 }
 
+//extern void beep(void);
 int main(void) 
 {
 //	volatile char *ram_addr = ((volatile char *)0x40000000);
@@ -368,7 +369,12 @@ int main(void)
 	init_soc(MCIMX233);
 
 	puts("\n\n\t--NiuBoot v0.9--\n(C) CFFHH Open Embedded Org. 2011\n\tDistributed Under GPLv3\n\n");
-	for(;;)
+	for(;;) /*{ beep(); }*/
+/*	{
+		puts("a");
+		mdelay(100);
+	}
+*/
 	{
 		puts("NIUBOOT# ");
 		get_cmd(cmd_buf);
@@ -543,7 +549,7 @@ CMD_FUNC_DEF( cmd_tftp )
 	}
 	return 0;
 }
-
+extern void init_taglist(int);
 CMD_FUNC_DEF( cmd_go )
 {
 	const char usage[] = "go - change PC to add or booting linux kernel with tag_list\n"
@@ -556,16 +562,58 @@ CMD_FUNC_DEF( cmd_go )
 	/*while(1)
 	{
 		*((unsigned short *)0x402298a4) = 0xaaaa;
-	}*/
+	}
 	int block=simple_strtoul(argv[1],NULL,16);
 	int page=simple_strtoul(argv[2],NULL,16);
 	char *buf = (char*)simple_strtoul(argv[3],NULL,16);
 	gpmi_k9f1208_read_page(block,page,buf);
+	*/
+
+	int block=simple_strtoul(argv[1],NULL,16);
+	init_taglist(block);
 	printf("ok\n");
 
 	return 0;
 }
 
+CMD_FUNC_DEF( cmd_xmodem )
+{
+#if 0
+	const char usage[] = "xmodem - download file to sdram via x-modem protocal\n"
+			"\txmodem <add(hex)> \n"; 
+	if(argc < 2)
+	{
+		putsy(usage);
+		return 0;
+	}
+	/*while(1)
+	{
+		*((unsigned short *)0x402298a4) = 0xaaaa;
+	}*/
+	int addr = simple_strtoul(argv[1],NULL,16);
+	int i,c;
+	//send
+#define SOH 0x01
+#define EOT 0x04
+#define ACK 0x06
+#define NAK 0x15
+#define CAN 0x18
+	for( i=0; i<5; i++)
+	{
+		udelay(1000);
+		putchar('0'+i);
+	}
+	putchar(NAK);
+	while( (c = getchar()) == SOH )
+	{
+		getchar();
+		getchar();
+		//for( i=0; i<
+		*addr++ = getchar();	
+	}
+	return 0;
+#endif
+}
 /*
  * Linear congruential random number generator
  */

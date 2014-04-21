@@ -41,6 +41,7 @@ static void serial_setbrg (void)
 
 	/* Calculate and set baudrate */
 	quot = CONFIG_DBGUART_CLK * 4 / CONFIG_BAUDRATE;
+	//quot = 20500000 * 4 / 9600;
 	hw_uartdbg.fbrd = quot & 0x3f;
 	hw_uartdbg.ibrd = quot >> 6;
 
