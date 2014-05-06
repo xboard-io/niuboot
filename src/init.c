@@ -3,6 +3,8 @@
 #include "init.h"
 #include "serial.h"
 #include "dm9000x.h"
+#include "sd.h"
+#include "utils.h"
 
 static PINCTRL * const pinctrl = (PINCTRL*) REGS_PINCTRL_BASE_PHYS;
 #define hw_pinctrl (*pinctrl) 
@@ -36,6 +38,8 @@ void mdelay(unsigned int n)
 }
 
 //init_soc is to init the core functions of SOC chipset ,such as clock, dma, serial line, pin-ctrl mode, etc.
+//extern void init_taglist(int addr);
+
 int init_soc(int soc_type)
 {
 	switch(soc_type)	
@@ -47,11 +51,21 @@ int init_soc(int soc_type)
 			//init_dma();
 
 			serial_init(); //heading by serial_ means this function is from serial.c
+			printf("INIT: \n<..uart..>\n");
+			printf("INIT: sdram...\n");
 			init_sdram();
 			//gpmi_init(); //heading by gpmi_ means this function is from gpmi.c
-			init_taglist(0x40000000);
+
+			printf("INIT: sd card...\n");
+			sd_init();
 			
+			printf("INIT: dm9k...\n");
 //			dm9000_initialize();
+
+			printf("INIT: tag-list...\n");
+//			init_taglist(0x40000000);
+
+			printf("INIT: booting...\n");
 			break;
 	}
 	return 0;
@@ -299,7 +313,7 @@ void init_clock_power(void)
 	hw_clkctrl.clkseq.clr = 0x80; //switch cpu clock to pll (clear bypassing)
 	// well, we got cpu running at 454Mhz now! 
 
-	/*set EMI clock to 80Mhz */
+	/* set EMI clock to 80Mhz */
 
 	hw_clkctrl.frac.set = 0x3f00; 
 	//hw_clkctrl.frac.clr = 0x400; //~27 ; //480Mhz * (18/27) = 320Mhz :ref_emi
@@ -316,10 +330,13 @@ void init_clock_power(void)
 
 	hw_clkctrl.clkseq.clr = 0x40; //enable emi clock to pll (clear bypassing)
 #endif
-	/*set GPMI freq. */
-	hw_clkctrl.gpmi &= ~(1<<31); //xtal clk 24Mhz to GPMI
+	/* set SSP freq. */ 
+	hw_clkctrl.ssp &= ~(1<<31); //unlock clk gate to SSP (24Mhz crystal default)
 
-	/*set UART freq. */
+	/* set GPMI freq. */
+	hw_clkctrl.gpmi &= ~(1<<31); //unlock clk gate to GPMI (24Mhz crystal default)
+
+	/*set D-UART freq. */
 	//fixed to 24Mhz from xstal
 }
 

@@ -205,3 +205,26 @@ typedef struct {
 	REG ocram_status[14];
 	//not finished , TBD
 }DIGCTL;
+
+typedef struct {
+	REG ctrl0;
+	REG cmd0;
+	reg( cmd1 );
+	reg( compref );
+	reg( compmask );
+	reg( timing );
+	REG ctrl1;
+	reg( data );
+
+	reg( sdresp0 );
+	reg( sdresp1 );
+	reg( sdresp2 );
+	reg( sdresp3 );
+
+	reg( status );
+
+	REG _pad_1[2];
+
+	reg( debug ); 	/* 0x100 */
+	reg( version );
+}SSP;

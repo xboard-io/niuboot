@@ -27,8 +27,53 @@
 #include "init.h"
 #include "gpmi.h"
 #include "net.h"
+#include "sd.h"
 
 extern void *get_heap_start(void);
+
+
+CMD_FUNC_DEF( cmd_sd )
+{
+	const char usage[] = "sd - sd card interface debug\n"
+			     "\tsd cmd-id argument\n";
+
+	if(argc < 2) {
+		puts(usage);
+		return 0;
+	}
+	unsigned int id = simple_strtoul(argv[1],NULL,16);
+	unsigned int argument = 0;
+	unsigned int resp[4];
+	int err;
+	
+	if(argc == 3)
+	{
+		argument = simple_strtoul(argv[2], NULL, 16);
+	}
+	printf("sending sd cmd %x...\n", id);
+	err = sd_cmd( id, argument, resp );
+	if(err) {
+		printf("err=%x\n",err);
+	}
+	else {
+		printf("[resp]\n%x\n%x\n%x\n%x\n", resp[3],resp[2],resp[1],resp[0]);
+	}
+	return 0;
+}
+
+CMD_FUNC_DEF( cmd_probe )
+{
+	const char usage[] = "probe - probe sd card\n"
+			     "\tprobe\n";
+
+	if(argc < 1) {
+		puts(usage);
+		return 0;
+	}
+	sd_probe();
+	return 0;
+}
+
 CMD_FUNC_DEF( cmd_dm )
 {
 	const char usage[] = "dm - dm9000 interface debug\n"
@@ -191,7 +236,9 @@ static const CMD cmd_list[] =
 		{"go",   cmd_go },
 		{"sdramtest",cmd_test},
 		{"ping", cmd_ping},
-		{"dm", cmd_dm}
+		{"dm", cmd_dm},
+		{"sd", cmd_sd},
+		{"probe",cmd_probe}
 
 		
 };
@@ -368,7 +415,7 @@ int main(void)
 
 	init_soc(MCIMX233);
 
-	puts("\n\n\t--NiuBoot v0.9--\n(C) CFFHH Open Embedded Org. 2011\n\tDistributed Under GPLv3\n\n");
+	puts("\n\n\t--NiuBoot v0.91--\n(C) Openboard. 2011-2014\n\tDistributed Under GPLv3\n\n");
 	for(;;) /*{ beep(); }*/
 /*	{
 		puts("a");
