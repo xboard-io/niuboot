@@ -35,3 +35,4 @@
 void sd_init( void );
 int sd_cmd( unsigned int id, unsigned int argument, unsigned int * response );
 int sd_probe( void );
+int sd_read( int addr, unsigned int len, unsigned char * buf);

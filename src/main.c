@@ -74,6 +74,28 @@ CMD_FUNC_DEF( cmd_probe )
 	return 0;
 }
 
+CMD_FUNC_DEF( cmd_read )
+{
+	const char usage[] = "read - read data from sd card\n"
+			     "\tread sd_addr length ram_addr\n";
+
+	if(argc < 4) {
+		puts(usage);
+		return 0;
+	}
+	unsigned int sd_addr = simple_strtoul(argv[1],NULL,16);
+	unsigned int length = simple_strtoul(argv[2],NULL,16);
+	unsigned int ram_addr = simple_strtoul(argv[3],NULL,16);
+	
+	if( sd_read( sd_addr, length, (unsigned char*)ram_addr ) ) {
+		printf("sd_read err\n");
+	}
+	else {
+		printf("read %x bytes\n", length);
+	}
+	return 0;
+}
+
 CMD_FUNC_DEF( cmd_dm )
 {
 	const char usage[] = "dm - dm9000 interface debug\n"
@@ -238,7 +260,8 @@ static const CMD cmd_list[] =
 		{"ping", cmd_ping},
 		{"dm", cmd_dm},
 		{"sd", cmd_sd},
-		{"probe",cmd_probe}
+		{"probe", cmd_probe},
+		{"read", cmd_read}
 
 		
 };

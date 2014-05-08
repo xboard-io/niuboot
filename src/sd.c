@@ -28,50 +28,78 @@ typedef struct _dma_cmd
 	unsigned int piowords[1];	//size depends on piowords_cnt
 }DMA_CMD;
 
+/* ctrl register flags */
+#define CLKGATE (1<<30)
+#define RUN (1<<29)
+#define IGNORE_CRC (1<<26)
+#define READ (1<<25)
+#define DATA_XFER (1<<24)
+#define WAIT_FOR_IRQ (1<<21)
 #define LONG_RESP (1<<19)
 #define GET_RESP (1<<17)
 #define CMD_ENABLE (1<<16)
+#define CTRL0_FLAG_MASK (READ | DATA_XFER | WAIT_FOR_IRQ | CMD_ENABLE | GET_RESP | LONG_RESP | IGNORE_CRC)
+#define XFER_COUNT_MASK (0xFFFF)
+
+/* cmd register flags */
+#define CONT_CLKING_EN (1<<21)
 #define APPEND_8CYC (1<<20)
-#define RUN (1<<29)
-#define CLKGATE (1<<30)
+#define BLOCK_SIZE_MASK (0xF<<16)
+#define BLOCK_SIZE_512B (9<<16)
+#define BLOCK_COUNT_MASK (0xFF<<8)
 
 
-/* response:
-    - pointer to buffer with 32B length 
-*/
+/* err flags */
 #define SDIO_IRQ (1<<31)
 #define RESP_ERR_IRQ (1<<29)
 #define RESP_TIMEOUT_IRQ (1<<27)
-#define IGNORE_CRC (1<<26)
 #define DATA_TIMEOUT_IRQ (1<<25)
 #define DATA_CRC_IRQ (1<<23)
 #define FIFO_UNDERRUN_IRQ (1<<21)
 #define RECV_TIMEOUT_IRQ (1<<17)
 #define FIFO_OVERRUN_IRQ (1<<15)
 
+/* status flags */
+#define CMD_BUSY (1<<3) 
+#define FIFO_EMPTY (1<<5)
+#define FIFO_FULL (1<<8)
+#define DATA_CRC_ERR (1<<13)
+
+/* response:
+    - pointer to buffer with 32B length 
+*/
 int sd_cmd( unsigned int id, unsigned int argument, unsigned int * response )
 {
-	unsigned int mode = CMD_ENABLE; 
+	unsigned int mode = CMD_ENABLE | WAIT_FOR_IRQ; 
 	int err;
-	if ( id >= 64 )		// invalid cmd number
+	if ( id >= 64 )		/* invalid cmd number */
 	       return -1;	
 	if ( (id != 0) && (id != 5) && (id != 15) ) {
 		mode |= GET_RESP;
-		if ( (id == 2) || (id == 9) || (id == 10) ) {
+		if( (id == 2) || (id == 9) || (id == 10) ) {
 			mode |= LONG_RESP;
 		}
-		if ( id == 41 ) {
+		if( id == 41 ) {
 			mode |= IGNORE_CRC;
 		}
+		if( id == 18  || id == 17 ) { /* read data */
+			mode |= READ | DATA_XFER;
+		}
 	} 
-	hw_ssp.ctrl0.clr = CMD_ENABLE | GET_RESP | LONG_RESP | IGNORE_CRC; 
+	hw_ssp.ctrl0.clr = CTRL0_FLAG_MASK;
 	hw_ssp.ctrl0.set = mode; 
 	hw_ssp.cmd0.dat = APPEND_8CYC | id;
 	hw_ssp.cmd1 = argument;
 	hw_ssp.ctrl1.clr = 0xffff0000; 	//clear error status
 
 	hw_ssp.ctrl0.set = RUN;
-	while (hw_ssp.ctrl0.dat & RUN);
+	udelay(10);
+	//while ( hw_ssp.status & CMD_BUSY );
+	while( hw_ssp.ctrl0.dat & RUN ) {
+		if( (id==18 || id==17) &&  (hw_ssp.status&CMD_BUSY)==0 ) {
+			break;
+		}
+	}
 	//udelay(10);
 	err = hw_ssp.ctrl1.dat & ( RESP_ERR_IRQ | RESP_TIMEOUT_IRQ ); 
 	if ( !err && response ) {
@@ -97,6 +125,7 @@ void sd_init( void )
 #define SDHC (1<<30)
 #define INIT_COMPLETE (1<<31)
 #define V3_3 0x300000
+static unsigned int rca;  /* relative card address */
 
 /* ret: 
     - success: 0
@@ -108,6 +137,7 @@ int sd_probe( void )
 	unsigned int resp[4] = {0};
 	unsigned int arg = 0;
 
+	rca = 0;
 	sd_cmd( 0, 0, NULL );
 
 	/* CMD8, query interface */
@@ -174,21 +204,26 @@ int sd_probe( void )
 	}
 	else {
 		char *csd = (char *) resp;
-		unsigned int blocks = 0;
-		unsigned int bsize = csd[10]&0xF;
+		unsigned int blocks = 0; /* block counts */
+		unsigned int bsize = csd[10]&0xF; /* single block size by the power of 2 */
+		
+		unsigned int csize = 0; /* card size by Mb*/
 		printf( "SD max speed: %x (32=20MHz,5A=50MHz)\n", csd[12] ); 
-		printf( "SD block size: %x bytes\n", 1<<bsize );
-		switch( csd[15]>>6 ) {
+		printf( "max block size: %x bytes\n", 1<<bsize );
+		switch( csd[15]>>6 ) {	
 		case 0: /* rev 1.0 */
 			blocks = ((((resp[2]&0x3FF)<<2)|(resp[1]>>30))+1) << (((resp[1]>>15)&0x7)+2);
+			csize = blocks >> (20-bsize);
 			break;
 		case 1: /* rev 2.0 */
 			blocks = ( ((resp[2]&0x3F)<<16) | (resp[1]>>16) ) + 1;	
+			csize = blocks >> (20-19);
+			rca |= SDHC;
 			break;
 		}
-		printf( "total size %x blocks(%xMB)\n", blocks, bsize >= 10 ? blocks << (bsize-10) : blocks >> (10-bsize) );
+		printf( "total blocks %x (%x MB)\n", blocks, csize );
 	}
-
+	rca |= arg >> 16;
 	return err; 
 }
 
@@ -200,10 +235,83 @@ int sd_probe( void )
     - the bytes to read
    buf:
     - memory buf to hold the data from sd card
+   
+   ret:
+    - 0, successful
+    - none-zero, has error
 */
 int sd_read( int addr, unsigned int len, unsigned char * buf)
 {
+	int i, j, err;
+	unsigned int resp[4] = {0};
+	unsigned int arg = 0;
+	unsigned int clk, clk_old;
+	unsigned int *buf4 = (unsigned int*) buf;
+	addr &= ~0x1FF; /* aligned with 512bytes */
+ 	len &= ~0x1FF; 
+	if( buf == 0 ) {
+		printf( "sd card not initialized\n" );
+		return -1;	
+	}
+	if( rca == 0 ) {
+		printf( "sd card not initialized\n" );
+		return -1;	
+	}
+
+	clk_old = clk = hw_ssp.timing; /* backup */
+	clk &= ~0xFFFF;
+	clk |= 0x200; /* speed up transfer rate 12Mhz */
+	hw_ssp.timing = clk;
+
+	arg = rca<<16;
+	/* CMD7, select card */
+	err = sd_cmd( 7, arg, resp ); /* TODO: check r1b busy flag? */
+	if( err ) {
+		printf( "SD: select card %x err=%x\n", rca, err );
+		goto read_err;
+	}
+	/* CMD18, read multiple blocks */
+	/* CMD17, read single blocks */
+	for( i=0; i<(len>>9); i++, addr+=512) {
+		hw_ssp.cmd0.clr = BLOCK_SIZE_MASK | BLOCK_COUNT_MASK;
+		hw_ssp.cmd0.set = BLOCK_SIZE_512B | (0<<8);
+		hw_ssp.ctrl0.clr = XFER_COUNT_MASK;
+		hw_ssp.ctrl0.set = 512;
+
+		arg = rca&SDHC ? addr>>9 : addr;
+
+		err = sd_cmd( 17, arg, resp );
+		if( err ) {
+			printf( "SD: read card %x err=%x\n", rca, err );
+			goto read_err;
+		}
+		for( j=0; j<(512/sizeof(int)); j++ ) {
+			while( hw_ssp.status & FIFO_EMPTY );
+			*buf4++ = hw_ssp.data;
+		}
+		while( hw_ssp.ctrl0.dat & RUN );
+		if( hw_ssp.status & DATA_CRC_ERR )
+		{
+			printf( "CRC err @blk%x\n", i );
+			goto read_err;
+		}
+	}	
+/*	while( !(hw_ssp.status & FIFO_EMPTY) ) {
+		*buf4++
+*/
+	/* CMD7, de-select card */
+	
+	err = sd_cmd( 7, 0, resp ); 
+	/*if( err ) {
+		printf( "SD: de-select card %x err=%x\n", rca, err );
+		return err;
+	}
+	*/
+	
 	return 0;
+read_err:
+	hw_ssp.timing = clk_old; // initial clk 200khz
+	return err;
 }
 
 #if 0
