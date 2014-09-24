@@ -261,7 +261,7 @@ static const CMD cmd_list[] =
 		{"dm", cmd_dm},
 		{"sd", cmd_sd},
 		{"probe", cmd_probe},
-		{"read", cmd_read}
+		{"read", cmd_read},
 
 		
 };
@@ -435,6 +435,13 @@ int main(void)
    	int param_cnt; 
 	char * cmd_buf = (char*)get_heap_start;	//compiler variable
 	char * cmd_params[8];
+	//char * auto_run = NULL;
+	char * auto_run = 
+		"!probe\n"
+		"!probe\n"
+		"!read 100000 400000 40008000\n"
+		"!go 40008000 40000000 a45\n" 
+		"--";
 
 	init_soc(MCIMX233);
 
@@ -447,7 +454,23 @@ int main(void)
 */
 	{
 		puts("NIUBOOT# ");
-		get_cmd(cmd_buf);
+		if( auto_run ) {
+			if( *auto_run++ == '!' ) { 
+				/* auto-run commmands flag */
+				while( *auto_run != ENTER && *auto_run != NEXT ) {
+					putchar( *cmd_buf++ = *auto_run++ );
+				}
+				putchar( '\n' );
+				*cmd_buf = '\0';
+				cmd_buf = (char*)get_heap_start; 
+				if( *++auto_run != '!' ) {
+					auto_run = NULL;
+				}
+			}
+		}
+		else {
+			get_cmd(cmd_buf);
+		}
 		puts("\n");
 		param_cnt = cut_cmd(cmd_buf, sizeof cmd_params / sizeof (char*), cmd_params);
 		
@@ -495,16 +518,26 @@ CMD_FUNC_DEF( cmd_mem )
 			puts(usage);
 		return 0;
 	}
-	volatile unsigned int *addr = (unsigned int*) (~0x3 & simple_strtoul( argv[1], NULL, 16));
+	volatile unsigned char *addr = (unsigned char*) (~0xF & simple_strtoul( argv[1], NULL, 16));
 	unsigned int i, num = 1;
+	int j;
 	if( argc > 2 ) 
 		num = simple_strtoul(argv[2], NULL, 16);	
 
 	for( i=0; i<num; i++, addr++)	
 	{
-		if( (i&0x3)==0 ) 
-			printf("\n%x\t", addr);
-		printf("%x ", *addr); 
+		if( (i&0xF)==0 ) 
+			printf("%x  ", addr);
+		else if( (i&7)==0 )
+			printf("  ");
+		printf("%B ", *addr); 
+		if( (i&0xf)==0xf ) { /* the last byte in every line */
+			printf("  |");
+			for( j=-15;j<=0;j++ ) {
+				printf( "%c", addr[j] );
+			}
+			printf("|\n");
+		}
 	}
 	puts("\n");
 	return 0;
@@ -623,7 +656,7 @@ extern void init_taglist(int);
 CMD_FUNC_DEF( cmd_go )
 {
 	const char usage[] = "go - change PC to add or booting linux kernel with tag_list\n"
-			"\tgo <add(hex)> [tag_list]\n"; 
+			"\tgo <add(hex)> [tag_list] [board_id]\n"; 
 	if(argc < 1)
 	{
 		puts(usage);
@@ -639,9 +672,17 @@ CMD_FUNC_DEF( cmd_go )
 	gpmi_k9f1208_read_page(block,page,buf);
 	*/
 
-	int block=simple_strtoul(argv[1],NULL,16);
-	init_taglist(block);
-	printf("ok\n");
+	int addr = simple_strtoul(argv[1],NULL,16);
+	int tag_list = argc > 2 ? simple_strtoul(argv[2],NULL,16) : -1;
+	int board_id = argc > 3 ? simple_strtoul(argv[3],NULL,16) : -1;
+
+
+	if( tag_list != -1 )
+		init_taglist(tag_list);
+	
+	if( addr != -1 ) {
+		(*(void (*)(int,int,int))addr)( 0, board_id, tag_list );
+	}
 
 	return 0;
 }
@@ -681,8 +722,8 @@ CMD_FUNC_DEF( cmd_xmodem )
 		//for( i=0; i<
 		*addr++ = getchar();	
 	}
-	return 0;
 #endif
+	return 0;
 }
 /*
  * Linear congruential random number generator

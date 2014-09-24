@@ -111,11 +111,12 @@ char* NetRxPackets[]={(char*)0x6000}; //receiving buffer	address
 //following origin source code
 /* Board/System/Debug information/definition ---------------- */
 
-/* #define CONFIG_DM9000_DEBUG */
+/*#define CONFIG_DM9000_DEBUG */
 
 #ifdef CONFIG_DM9000_DEBUG
 #define DM9000_DBG(fmt,args...) printf(fmt, ##args)
-#define DM9000_DMP_PACKET(func,packet,length)  \
+#define DM9000_DMP_PACKET(func,packet,length)  
+	/*
 	do { \
 		int i; 							\
 		printf(func ": length: %d\n", length);			\
@@ -125,6 +126,7 @@ char* NetRxPackets[]={(char*)0x6000}; //receiving buffer	address
 			printf("%02x ", ((unsigned char *) packet)[i]);	\
 		} printf("\n");						\
 	} while(0)
+	*/
 #else
 #define DM9000_DBG(fmt,args...)
 #define DM9000_DMP_PACKET(func,packet,length)
@@ -194,8 +196,8 @@ static void dm9000_outblk_8bit(volatile void *data_ptr, int count)
 
 	for (i = 0; i < count; i++) {
 		gpmi_dm9000_write_data_bulk(((uint8_t*)data_ptr)+i, 1);
-		gpmi_dm9000_read_data_bulk(&tmp,1);
-		printf("data[%x]=%x\n", i, tmp);
+		//gpmi_dm9000_read_data_bulk(&tmp,1);
+		printf("data[%x]=%x\n", i, *(((uint8_t*)data_ptr)+i) );
 	}
 }
 
@@ -293,11 +295,11 @@ dm9000_probe(void)
 	id_val |= DM9000_ior(DM9000_PIDL) << 16;
 	id_val |= DM9000_ior(DM9000_PIDH) << 24;
 	if (id_val == DM9000_ID) {
-		printf("dm9000 i/o: 0x%x, id: 0x%x \n",CONFIG_DM9000_BASE,
+		printf("dm9000 i/o: %x, id: %x \n",CONFIG_DM9000_BASE,
 		       id_val);
 		return 0;
 	} else {
-		printf("dm9000 not found at 0x%08x id: 0x%08x\n",
+		printf("dm9000 not found at 0x%x id: 0x%x\n",
 		       CONFIG_DM9000_BASE, id_val);
 		return -1;
 	}
@@ -318,19 +320,23 @@ dm9000_reset(void)
 	DM9000_iow(DM9000_GPR, 0);
 	/* Step 2: Software reset */
 	DM9000_iow(DM9000_NCR, (NCR_LBK_INT_MAC | NCR_RST));
-
-	do {
+	int i;
+	for( i=0; i<1000; i++ ) {
 		DM9000_DBG("resetting the DM9000, 1st reset\n");
 		udelay(25); /* Wait at least 20 us */
-	} while (DM9000_ior(DM9000_NCR) & 1);
+		if( DM9000_ior(DM9000_NCR) & 1 )
+		       continue;	
+	} 
 
 	DM9000_iow(DM9000_NCR, 0);
 	DM9000_iow(DM9000_NCR, (NCR_LBK_INT_MAC | NCR_RST)); /* Issue a second reset */
 
-	do {
+	for( i=0; i<1000; i++ ) {
 		DM9000_DBG("resetting the DM9000, 2nd reset\n");
 		udelay(25); /* Wait at least 20 us */
-	} while (DM9000_ior(DM9000_NCR) & 1);
+		if( DM9000_ior(DM9000_NCR) & 1 )
+		       continue;	
+	} 
 
 	/* Check whether the ethernet controller is present */
 	if ((DM9000_ior(DM9000_PIDL) != 0x0) ||
@@ -402,7 +408,7 @@ static int dm9000_init(struct eth_device *dev/*, bd_t *bd*/)
 	/* Clear interrupt status */
 	DM9000_iow(DM9000_ISR, ISR_ROOS | ISR_ROS | ISR_PTS | ISR_PRS);
 
-	printf("MAC: %xM\n", dev->enetaddr);
+	printf("MAC: %x\n", dev->enetaddr);
 
 	/* fill device MAC address registers */
 	for (i = 0, oft = DM9000_PAR; i < 6; i++, oft++)

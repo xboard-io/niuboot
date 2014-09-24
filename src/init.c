@@ -60,7 +60,7 @@ int init_soc(int soc_type)
 			sd_init();
 			
 			printf("INIT: dm9k...\n");
-//			dm9000_initialize();
+			dm9000_initialize();
 
 			printf("INIT: tag-list...\n");
 //			init_taglist(0x40000000);

@@ -143,11 +143,12 @@ unsigned long simple_strtoul(const char *cp,char **endp,unsigned int base)
     return result;
 }
 
+static const char lut[]="0123456789ABCDEF";
+
 char *itox(unsigned int num)
 {
 	static char hex[12] = "0x";
 	int i, pos;
-	const char lut[]="0123456789ABCDEF";
 	
 	for(i = 0, pos = 2; i < 8; i++) {
 		if( (hex[pos] = lut[ (num<<4*i)>>28 ]) != '0' ||  pos != 2 )
@@ -160,6 +161,7 @@ char *itox(unsigned int num)
 int printf(const char *format, ...)
 {
 	int i;
+	unsigned char byte;
 	va_list arg_list;
 	va_start( arg_list, format );
 
@@ -174,6 +176,18 @@ int printf(const char *format, ...)
 					continue;
 				case 'x':
 					puts( itox( va_arg( arg_list, unsigned int ) ) );
+					continue;
+				case 'B':
+					byte = (unsigned char) va_arg( arg_list, unsigned int );
+					putchar( lut[byte>>4] );
+					putchar( lut[byte&0xF] );	
+					continue;
+				case 'c':
+					byte = (unsigned char) va_arg( arg_list, unsigned int );
+					if( byte>=' ' && byte<='~' )
+						putchar( byte );
+					else
+						putchar( '.' );
 					continue;
 				default:
 					i--;
