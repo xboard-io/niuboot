@@ -324,7 +324,7 @@ void init_clock_power(void)
 	hw_clkctrl.emi |= 0x3f;
 	//hw_clkctrl.emi |= 0x4; //320Mhz/4 =80Mhz , the final emi freq.
 	//hw_clkctrl.emi &= ~0x17;//1b; //320M/4=80M
-	hw_clkctrl.emi &= ~0x3c; //288M/3=96M
+	hw_clkctrl.emi &= ~0x3b; //288M/4=72M
 	//zhai comment @class
 	hw_clkctrl.emi &= ~0xc0000000; //clr gate, syc disble
 
